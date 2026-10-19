@@ -1,0 +1,507 @@
+{
+  "menu": {
+    "combos": [
+      {
+        "id": 1,
+        "nombre": "COMBO POSITIVO DULCE",
+        "descripcion": [
+          "Café taza o para llevar chico",
+          "2 medialunas"
+        ],
+        "precio": 7000,
+        "disponible": true
+      },
+      {
+        "id": 2,
+        "nombre": "COMBO POSITIVO SALADO",
+        "descripcion": [
+          "Café taza o para llevar chico",
+          "Tostado"
+        ],
+        "precio": 9000,
+        "disponible": true
+      },
+      {
+        "id": 295,
+        "nombre": "Prueba",
+        "descripcion": [
+          "Es una plato Test"
+        ],
+        "precio": 1500,
+        "disponible": false
+      },
+      {
+        "id": 296,
+        "nombre": "Prueba",
+        "descripcion": [
+          "Es una plato Test"
+        ],
+        "precio": 1000,
+        "disponible": false
+      },
+      {
+        "id": 297,
+        "nombre": "Prueba",
+        "descripcion": [
+          "Es una plato Test"
+        ],
+        "precio": 1000,
+        "disponible": false
+      },
+      {
+        "id": 304,
+        "nombre": "PROMO TORTA",
+        "descripcion": [],
+        "precio": 8000,
+        "disponible": true
+      }
+    ],
+    "cafeteria": [
+      {
+        "id": 3,
+        "nombre": "Pocillo",
+        "descripcion": [],
+        "precio": 4400,
+        "disponible": true
+      },
+      {
+        "id": 4,
+        "nombre": "Jarrito",
+        "descripcion": [],
+        "precio": 4900,
+        "disponible": true
+      },
+      {
+        "id": 5,
+        "nombre": "Taza",
+        "descripcion": [],
+        "precio": 5500,
+        "disponible": true
+      },
+      {
+        "id": 6,
+        "nombre": "Tazón",
+        "descripcion": [],
+        "precio": 6500,
+        "disponible": true
+      },
+      {
+        "id": 7,
+        "nombre": "Té",
+        "descripcion": [],
+        "precio": 3900,
+        "disponible": true
+      },
+      {
+        "id": 8,
+        "nombre": "Té con leche",
+        "descripcion": [],
+        "precio": 3900,
+        "disponible": true
+      },
+      {
+        "id": 91,
+        "nombre": "Café para llevar chico",
+        "descripcion": [],
+        "precio": 5500,
+        "disponible": true
+      },
+      {
+        "id": 9,
+        "nombre": "Café para llevar mediano",
+        "descripcion": [],
+        "precio": 6000,
+        "disponible": true
+      },
+      {
+        "id": 10,
+        "nombre": "Café para llevar grande",
+        "descripcion": [],
+        "precio": 6500,
+        "disponible": true
+      },
+      {
+        "id": 11,
+        "nombre": "Cappuccino",
+        "descripcion": [],
+        "precio": 6000,
+        "disponible": true
+      },
+      {
+        "id": 12,
+        "nombre": "Submarino",
+        "descripcion": [],
+        "precio": 7000,
+        "disponible": true
+      },
+      {
+        "id": 131,
+        "nombre": "Latte frio",
+        "descripcion": [],
+        "precio": 6500,
+        "disponible": true
+      }
+    ],
+    "bebidas": [
+      {
+        "id": 13,
+        "nombre": "Limonada",
+        "descripcion": [],
+        "precio": 5500,
+        "disponible": true
+      },
+      {
+        "id": 14,
+        "nombre": "Exprimido",
+        "descripcion": [],
+        "precio": 4400,
+        "disponible": true
+      },
+      {
+        "id": 15,
+        "nombre": "Licuados de banana/frutilla",
+        "descripcion": [],
+        "precio": 6000,
+        "disponible": true
+      },
+      {
+        "id": 16,
+        "nombre": "Gaseosas",
+        "descripcion": [],
+        "precio": 2800,
+        "disponible": true
+      },
+      {
+        "id": 17,
+        "nombre": "Agua saborizada",
+        "descripcion": [],
+        "precio": 2800,
+        "disponible": true
+      },
+      {
+        "id": 18,
+        "nombre": "Agua",
+        "descripcion": [],
+        "precio": 2500,
+        "disponible": true
+      },
+      {
+        "id": 307,
+        "nombre": "Agua caliente",
+        "descripcion": [],
+        "precio": 1000,
+        "disponible": true
+      }
+    ],
+    "salados": [
+      {
+        "id": 191,
+        "nombre": "Huevos revueltos",
+        "descripcion": [],
+        "precio": 5500,
+        "disponible": true
+      },
+      {
+        "id": 19,
+        "nombre": "Tostado",
+        "descripcion": [],
+        "precio": 6000,
+        "disponible": true
+      },
+      {
+        "id": 20,
+        "nombre": "Tostado de queso y tomate",
+        "descripcion": [],
+        "precio": 6500,
+        "disponible": true
+      },
+      {
+        "id": 21,
+        "nombre": "Sándwich completo",
+        "descripcion": [
+          "Jamón, queso, lechuga y tomate"
+        ],
+        "precio": 6500,
+        "disponible": true
+      },
+      {
+        "id": 22,
+        "nombre": "Sándwich positivo",
+        "descripcion": [
+          "Panceta, jamón crudo, queso, lechuga y tomate"
+        ],
+        "precio": 8800,
+        "disponible": true
+      },
+      {
+        "id": 23,
+        "nombre": "Avocado Toast",
+        "descripcion": [],
+        "precio": 8000,
+        "disponible": true
+      },
+      {
+        "id": 24,
+        "nombre": "César con pollo",
+        "descripcion": [],
+        "precio": 10500,
+        "disponible": true
+      },
+      {
+        "id": 241,
+        "nombre": "Tortilla papa con ensalada",
+        "descripcion": [],
+        "precio": 8800,
+        "disponible": false
+      },
+      {
+        "id": 25,
+        "nombre": "Wrap de pollo",
+        "descripcion": [
+          "Pollo, muzarella, espinaca, tomate seco, mostaza"
+        ],
+        "precio": 10500,
+        "disponible": true
+      },
+      {
+        "id": 26,
+        "nombre": "Empanadas",
+        "descripcion": [],
+        "precio": 3000,
+        "disponible": true
+      },
+      {
+        "id": 27,
+        "nombre": "Pizza individual",
+        "descripcion": [],
+        "precio": 6500,
+        "disponible": true
+      },
+      {
+        "id": 28,
+        "nombre": "Tartis",
+        "descripcion": [],
+        "precio": 6500,
+        "disponible": true
+      },
+      {
+        "id": 29,
+        "nombre": "Plato del día",
+        "descripcion": [
+          "Consultar"
+        ],
+        "precio": 10000,
+        "disponible": false
+      },
+      {
+        "id": 291,
+        "nombre": "Milanesa con pure o ensalada",
+        "descripcion": [],
+        "precio": 13000,
+        "disponible": true
+      },
+      {
+        "id": 292,
+        "nombre": "Armá tu ensalada",
+        "descripcion": [],
+        "precio": 9000,
+        "disponible": true
+      },
+      {
+        "id": 293,
+        "nombre": "Bolsita de arroz x2",
+        "descripcion": [],
+        "precio": 1000,
+        "disponible": true
+      },
+      {
+        "id": 305,
+        "nombre": "Muffins",
+        "descripcion": [],
+        "precio": 1500,
+        "disponible": true
+      },
+      {
+        "id": 306,
+        "nombre": "TOSTADO CON DTO PASITO",
+        "descripcion": [],
+        "precio": 4800,
+        "disponible": true
+      }
+    ],
+    "dulces": [
+      {
+        "id": 30,
+        "nombre": "Medialuna",
+        "descripcion": [],
+        "precio": 1200,
+        "disponible": true
+      },
+      {
+        "id": 31,
+        "nombre": "Medialuna con Jamón y Queso",
+        "descripcion": [],
+        "precio": 2000,
+        "disponible": true
+      },
+      {
+        "id": 32,
+        "nombre": "Budín",
+        "descripcion": [],
+        "precio": 2200,
+        "disponible": true
+      },
+      {
+        "id": 33,
+        "nombre": "Cookie",
+        "descripcion": [],
+        "precio": 4000,
+        "disponible": true
+      },
+      {
+        "id": 34,
+        "nombre": "Mini delicias",
+        "descripcion": [],
+        "precio": 2000,
+        "disponible": true
+      },
+      {
+        "id": 35,
+        "nombre": "Alfajorcito",
+        "descripcion": [],
+        "precio": 1200,
+        "disponible": true
+      },
+      {
+        "id": 36,
+        "nombre": "Pastaflora|Crumble|Coco y DdL",
+        "descripcion": [],
+        "precio": 4000,
+        "disponible": true
+      },
+      {
+        "id": 37,
+        "nombre": "Torta de ricota",
+        "descripcion": [],
+        "precio": 2000,
+        "disponible": false
+      },
+      {
+        "id": 38,
+        "nombre": "Cookie de avena",
+        "descripcion": [],
+        "precio": 3500,
+        "disponible": true
+      },
+      {
+        "id": 39,
+        "nombre": "Brownie",
+        "descripcion": [],
+        "precio": 4000,
+        "disponible": true
+      },
+      {
+        "id": 40,
+        "nombre": "Cookie",
+        "descripcion": [],
+        "precio": 2500,
+        "disponible": false
+      },
+      {
+        "id": 41,
+        "nombre": "Scon de queso",
+        "descripcion": [],
+        "precio": 4000,
+        "disponible": true
+      },
+      {
+        "id": 294,
+        "nombre": "Nuevo plato Test",
+        "descripcion": [
+          "Descripción"
+        ],
+        "precio": 10000,
+        "disponible": false
+      }
+    ],
+    "choco-late": [
+      {
+        "id": 42,
+        "nombre": "Oreo bañada",
+        "descripcion": [],
+        "precio": 2000,
+        "disponible": true
+      },
+      {
+        "id": 43,
+        "nombre": "Copitos Dulce de leche",
+        "descripcion": [],
+        "precio": 2600,
+        "disponible": true
+      },
+      {
+        "id": 44,
+        "nombre": "Mini tableta",
+        "descripcion": [],
+        "precio": 2200,
+        "disponible": true
+      },
+      {
+        "id": 45,
+        "nombre": "Tableta 50gr",
+        "descripcion": [],
+        "precio": 5200,
+        "disponible": true
+      },
+      {
+        "id": 46,
+        "nombre": "Alpinitos",
+        "descripcion": [],
+        "precio": 4800,
+        "disponible": true
+      },
+      {
+        "id": 298,
+        "nombre": "Chocoladrillo",
+        "descripcion": [],
+        "precio": 3000,
+        "disponible": true
+      },
+      {
+        "id": 299,
+        "nombre": "Cabsha",
+        "descripcion": [],
+        "precio": 1400,
+        "disponible": true
+      },
+      {
+        "id": 300,
+        "nombre": "Tableta Love",
+        "descripcion": [],
+        "precio": 3600,
+        "disponible": true
+      },
+      {
+        "id": 301,
+        "nombre": "Chupetines",
+        "descripcion": [],
+        "precio": 2400,
+        "disponible": true
+      },
+      {
+        "id": 302,
+        "nombre": "Tableta XL",
+        "descripcion": [],
+        "precio": 17000,
+        "disponible": true
+      },
+      {
+        "id": 303,
+        "nombre": "Bolsita DUO",
+        "descripcion": [],
+        "precio": 4600,
+        "disponible": true
+      }
+    ]
+  }
+}

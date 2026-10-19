@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Positivo Caf&eacute;</title>
+  <link rel="icon" href="/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=perfiles-20261018">
+  <script defer src="/lucide.min.js"></script>
+  <script defer src="/app.js?v=perfiles-20261018"></script>
+</head>
+<body>
+  <header class="app-header">
+    <a href="/mozo" class="brand" aria-label="Positivo Cafe"><img src="/logo.png" alt="Positivo Cafe"></a>
+    <nav id="mozoNav" aria-label="Secciones">
+      <button class="nav-button active" data-view="mesas"><i data-lucide="layout-grid"></i>Mesas</button>
+      <button class="nav-button" data-view="entregas"><i data-lucide="bell-ring"></i>Para entregar<span id="entregasBadge" class="badge ready" hidden>0</span></button>
+      <button class="nav-button" data-view="menu"><i data-lucide="utensils"></i>Gesti&oacute;n de platos</button>
+      <button class="nav-button" data-view="tickets"><i data-lucide="receipt"></i>Tickets</button>
+      <button class="nav-button" data-view="historial"><i data-lucide="history"></i>Pedidos</button>
+      <button class="nav-button" data-view="cierres"><i data-lucide="calendar-check"></i>Cierre diario</button>
+    </nav>
+    <div class="profile-selector" role="group" aria-label="Perfil">
+      <a href="/mozo" data-perfil="mozo" class="active"><i data-lucide="user-round"></i>Mozo</a>
+      <a href="/cocina" data-perfil="cocina"><i data-lucide="chef-hat"></i>Cocina</a>
+    </div>
+    <div class="mozo-field" id="mozoLabel"><label for="mozo">Mozo</label><select id="mozo" aria-label="Perfil de mozo"><option value="">Elegir perfil</option></select><button id="gestionarPerfiles" class="icon-button" title="Gestionar perfiles" aria-label="Gestionar perfiles"><i data-lucide="users-round"></i></button></div>
+  </header>
+  <div class="status-bar"><span id="fechaActual"></span><span id="horaActual"></span><span id="estadoSistema">Conectando...</span><button id="refresh" class="icon-button" title="Actualizar" aria-label="Actualizar"><i data-lucide="refresh-cw"></i></button></div>
+  <main>
+    <div id="avisoEntregas" class="delivery-notice" role="status" hidden><span><i data-lucide="bell-ring"></i><strong id="avisoEntregasTexto"></strong></span><button class="success" data-view="entregas">Ver entregas</button></div>
+    <section id="view-mesas" class="view active">
+      <div class="page-title"><div><h1>Mapa del restaurante</h1><p class="muted" id="ocupadas"></p></div><div class="toolbar"><span class="legend"><span class="dot free"></span>Libre</span><span class="legend"><span class="dot occupied"></span>Ocupada</span></div></div>
+      <div id="mapaMesas" class="mesa-grid"></div>
+    </section>
+    <section id="view-entregas" class="view">
+      <div class="page-title"><div><h1>Listos para entregar</h1><p id="entregasTotal" class="muted"></p></div><div class="segmented" role="group" aria-label="Pedidos listos"><button data-entregas-filtro="mios" class="active" aria-pressed="true">Mis pedidos</button><button data-entregas-filtro="todos" aria-pressed="false">Todos</button></div></div>
+      <div id="listaEntregas" class="deliveries-grid"></div>
+    </section>
+    <section id="view-cocina" class="view">
+      <div class="page-title"><div><h1>Cocina</h1><p id="comandasTotal" class="muted"></p></div><span id="actualizacionCocina" class="muted"></span></div>
+      <div class="filters"><label class="search"><i data-lucide="search"></i><input id="cocinaBuscar" placeholder="Buscar mesa, plato o mozo" aria-label="Buscar en cocina"></label></div>
+      <div class="kitchen-board">
+        <section class="kitchen-column pending"><div class="column-heading"><h2><i data-lucide="clock-3"></i>Pendientes</h2><span id="count-pendientes">0</span></div><div id="cocina-pendientes"></div></section>
+        <section class="kitchen-column preparing"><div class="column-heading"><h2><i data-lucide="cooking-pot"></i>En preparaci&oacute;n</h2><span id="count-preparacion">0</span></div><div id="cocina-preparacion"></div></section>
+        <section class="kitchen-column ready"><div class="column-heading"><h2><i data-lucide="check-check"></i>Listos para retirar</h2><span id="count-listos">0</span></div><div id="cocina-listos"></div></section>
+      </div>
+    </section>
+    <section id="view-menu" class="view">
+      <div class="page-title"><h1>Gesti&oacute;n de platos</h1><div class="toolbar"><button id="nuevaCategoria" class="secondary"><i data-lucide="folder-plus"></i>Nueva categor&iacute;a</button><button id="nuevoProducto" class="primary"><i data-lucide="plus"></i>Nuevo plato</button></div></div>
+      <div class="filters"><label class="search"><i data-lucide="search"></i><input id="menuBuscar" placeholder="Buscar por nombre o descripcion" aria-label="Buscar productos"></label><select id="menuCategoria" aria-label="Filtrar categoria"></select></div>
+      <div class="changes-bar"><span id="cantidadCambios">Sin cambios pendientes</span><div class="toolbar"><button id="descartarCambios" class="secondary" disabled>Descartar cambios</button><button id="aplicarCambios" class="success" disabled><i data-lucide="save"></i>Aplicar cambios</button></div></div>
+      <div class="table-scroll"><table><thead><tr><th>Plato</th><th>Categor&iacute;a</th><th>Precio</th><th>Disponible</th><th>Estado</th><th></th></tr></thead><tbody id="menuBody"></tbody></table></div>
+    </section>
+    <section id="view-tickets" class="view">
+      <div class="page-title"><h1>Tickets electr&oacute;nicos</h1><label>Fecha<input type="date" id="ticketFecha"></label></div>
+      <div id="resumenTickets" class="summary-band"></div>
+      <div class="table-scroll"><table><thead><tr><th>Ticket</th><th>Fecha</th><th>Cuenta</th><th>Medio de pago</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody id="ticketsBody"></tbody></table></div>
+    </section>
+    <section id="view-historial" class="view">
+      <div class="page-title"><h1>Registro de pedidos</h1><div class="toolbar"><label>Fecha<input id="historialFecha" type="date"></label><label>Mozo<select id="historialMozo"><option value="">Todos</option></select></label></div></div>
+      <p id="historialTotal" class="muted"></p>
+      <div class="table-scroll"><table><thead><tr><th>Pedido / hora</th><th>Mesa / cuenta</th><th>Registrado por</th><th>Plato</th><th>Cantidad</th><th>Estado</th><th>Pagados</th></tr></thead><tbody id="historialBody"></tbody></table></div>
+    </section>
+    <section id="view-cierres" class="view">
+      <div class="page-title"><h1>Resumen y cierre diario</h1><div class="toolbar"><label>Jornada<input id="cierreFecha" type="date"></label><button id="cerrarDia" class="success"><i data-lucide="lock-keyhole"></i>Cerrar jornada</button></div></div>
+      <div id="resumenCierre" class="summary-band"></div>
+      <h2 class="table-title">Detalle de ventas</h2><div class="table-scroll"><table><thead><tr><th>Hora</th><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Importe</th><th>Pago</th></tr></thead><tbody id="ventasBody"></tbody></table></div>
+      <h2 class="table-title">Historial de cierres</h2><div class="table-scroll"><table><thead><tr><th>Jornada</th><th>Tickets</th><th>Efectivo</th><th>Tarjeta</th><th>Descuentos</th><th>Total</th><th></th></tr></thead><tbody id="cierresBody"></tbody></table></div>
+    </section>
+  </main>
+
+  <dialog id="perfilesDialog">
+    <div class="dialog-header"><h2>Perfiles de mozo</h2><button class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+    <div id="listaPerfiles" class="saved-profiles"></div>
+    <form id="perfilForm"><label>Nombre del nuevo perfil<input id="perfilNombre" maxlength="100" required autocomplete="name" placeholder="Nombre del mozo"></label><div class="dialog-actions"><button type="submit" class="primary"><i data-lucide="user-plus"></i>Guardar y usar</button></div></form>
+  </dialog>
+  <dialog id="pedidosDialog" class="large-dialog">
+    <div class="dialog-header"><h2><i data-lucide="utensils"></i>Gestionar pedidos &middot; <span id="pedidosMesaNombre"></span></h2><button class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+    <div class="order-layout">
+      <section class="catalog-pane">
+        <div id="filtrosCategorias" class="category-tabs" role="group" aria-label="Categorias del menu"></div>
+        <label class="search"><i data-lucide="search"></i><input id="buscarPlato" placeholder="Buscar platos..." aria-label="Buscar platos"></label>
+        <div id="listaMenu" class="catalog-scroll"></div>
+      </section>
+      <section class="cart-pane">
+        <div class="cart-heading"><h3>Tanda pendiente</h3><span id="cartCount" class="badge">0</span></div>
+        <label id="clientePedidoLabel">Cliente<input id="pedidoCliente" maxlength="100" placeholder="Mesa general"></label>
+        <div id="pedidosPendientesContainer" class="cart-scroll"></div>
+        <div class="cart-footer"><div class="total-line"><span>Total</span><strong id="cartTotal">$ 0</strong></div><button id="enviarCocina" class="primary" disabled><i data-lucide="check"></i>Confirmar tanda</button></div>
+      </section>
+    </div>
+  </dialog>
+  <dialog id="tipoCafeDialog">
+    <div class="dialog-header"><div><h2>&iquest;C&oacute;mo lo vas a querer?</h2><p id="tipoCafeProducto" class="muted"></p></div><button type="button" class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+    <div class="coffee-choices">
+      <button type="button" data-cafe-type="Cafe solo"><i data-lucide="coffee"></i><strong>Caf&eacute; solo</strong><small>Caf&eacute; puro</small></button>
+      <button type="button" data-cafe-type="Cortado"><i data-lucide="coffee"></i><strong>Cortado</strong><small>Caf&eacute; con un poco de leche</small></button>
+      <button type="button" data-cafe-type="Lagrima"><i data-lucide="milk"></i><strong>L&aacute;grima</strong><small>Leche con un poco de caf&eacute;</small></button>
+      <button type="button" data-cafe-type="Cafe con leche"><i data-lucide="cup-soda"></i><strong>Caf&eacute; con leche</strong><small>Mitad caf&eacute;, mitad leche</small></button>
+    </div>
+  </dialog>
+  <dialog id="detalleProductoDialog">
+    <form id="detalleProductoForm">
+      <div class="dialog-header"><h2 id="detalleProductoNombre"></h2><button type="button" class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+      <p id="detalleProductoPrecio" class="product-price"></p>
+      <fieldset id="tipoCafeFieldset" class="coffee-variants"><legend>&iquest;C&oacute;mo lo vas a querer?</legend>
+        <label><input type="radio" name="tipoCafe" value="Cafe solo" checked><i data-lucide="coffee"></i>Caf&eacute; solo</label>
+        <label><input type="radio" name="tipoCafe" value="Cortado"><i data-lucide="coffee"></i>Cortado</label>
+        <label><input type="radio" name="tipoCafe" value="Lagrima"><i data-lucide="milk"></i>L&aacute;grima</label>
+        <label><input type="radio" name="tipoCafe" value="Cafe con leche"><i data-lucide="cup-soda"></i>Caf&eacute; con leche</label>
+      </fieldset>
+      <label id="pedidoNotasLabel">Comentario<textarea id="pedidoNotas" maxlength="900" rows="2" placeholder="Sin observaciones"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary close-dialog">Cancelar</button><button id="detalleProductoSubmit" type="submit" class="primary">Guardar comentario</button></div>
+    </form>
+  </dialog>
+  <dialog id="clienteDialog"><form id="clienteForm"><h2>Cliente de Take Away</h2><label>Nombre del cliente<input id="clienteNombre" maxlength="100" required></label><div class="dialog-actions"><button type="button" class="secondary close-dialog">Cancelar</button><button type="submit" class="primary">Continuar</button></div></form></dialog>
+  <dialog id="consumosDialog" class="large-dialog"><div class="dialog-header"><h2 id="consumosTitle">Consumos</h2><button class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div><div class="table-scroll"><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Cocina</th><th>Pagados</th><th>Importe</th><th></th></tr></thead><tbody id="consumosBody"></tbody></table></div><div class="dialog-actions"><button id="enviarBorradores" class="primary" hidden>Enviar borradores a cocina</button><button id="liberarMesa" class="secondary" hidden><i data-lucide="door-open"></i>Liberar mesa</button></div></dialog>
+
+  <dialog id="pagoDialog" class="large-dialog"><form id="pagoForm">
+    <div class="dialog-header"><h2>Pagar cuenta &middot; <span id="pagoMesaNombre"></span></h2><button type="button" class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+    <div class="payment-layout"><section><div class="section-title"><h3>Consumos a pagar</h3><label class="checkbox-label"><input id="seleccionarTodos" type="checkbox" checked>Todos</label></div><div id="pagoItems" class="payment-items"></div></section>
+      <section class="payment-summary"><fieldset class="payment-methods"><legend>Medio de pago</legend><label><input type="radio" name="metodo" value="EFECTIVO" checked><i data-lucide="banknote"></i>Efectivo</label><label><input type="radio" name="metodo" value="TARJETA"><i data-lucide="credit-card"></i>Tarjeta</label></fieldset>
+        <label id="totalEfectivoLabel">Total redondeado en efectivo (opcional)<input id="totalEfectivo" type="number" step="0.01" min="0.01" placeholder="Descuento automatico" aria-describedby="redondeoRango redondeoError"><small id="redondeoRango"></small><span id="redondeoError" class="field-error" role="alert" hidden></span></label>
+        <dl class="payment-totals"><div><dt>Subtotal</dt><dd id="pagoSubtotal"></dd></div><div><dt>Descuento efectivo</dt><dd id="pagoDescuento"></dd></div><div><dt>Total</dt><dd id="pagoTotal"></dd></div></dl>
+        <button type="submit" id="confirmarPago" class="success"><i data-lucide="check"></i>Confirmar pago</button>
+      </section>
+    </div>
+  </form></dialog>
+  <dialog id="productoDialog"><form id="productoForm"><div class="dialog-header"><h2 id="productoDialogTitle">Nuevo plato</h2><button type="button" class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
+    <input id="productoId" type="hidden">
+    <label>Categor&iacute;a<select id="productoCategoria" required></select></label>
+    <label>Nombre<input id="productoNombre" maxlength="200" required></label>
+    <label>Precio<input id="productoPrecio" type="number" min="0" step="0.01" required></label>
+    <label>Descripci&oacute;n<textarea id="productoDescripcion" maxlength="10000" rows="3"></textarea></label>
+    <label class="checkbox-label"><input id="productoDisponible" type="checkbox" checked>Disponible en el men&uacute;</label>
+    <div class="dialog-actions"><button type="button" class="secondary close-dialog">Cancelar</button><button class="primary" type="submit"><i data-lucide="list-plus"></i>Agregar a lista</button></div>
+  </form></dialog>
+  <dialog id="categoriaDialog"><form id="categoriaForm"><h2>Nueva categor&iacute;a</h2><label>Nombre<input id="categoriaNombre" maxlength="100" required></label><div class="dialog-actions"><button type="button" class="secondary close-dialog">Cancelar</button><button type="submit" class="primary">Guardar</button></div></form></dialog>
+  <dialog id="ticketDialog"><div class="dialog-header"><h2>Comprobante</h2><button class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div><pre id="ticketContenido"></pre><div class="dialog-actions"><button id="imprimirServidor" class="secondary">Impresora configurada</button><button id="imprimirNavegador" class="primary"><i data-lucide="printer"></i>Imprimir</button></div></dialog>
+  <dialog id="confirmDialog"><div class="dialog-header"><h2 id="confirmTitle"></h2></div><p id="confirmMessage"></p><div class="dialog-actions"><button id="confirmNo" class="secondary">Cancelar</button><button id="confirmYes" class="primary">Confirmar</button></div></dialog>
+  <div id="toast" popover="manual" role="status" aria-live="polite" aria-atomic="true" hidden><span id="toastIcon" aria-hidden="true"></span><span id="toastMessage"></span><button id="toastClose" class="icon-button" type="button" title="Cerrar aviso" aria-label="Cerrar aviso"><i data-lucide="x"></i></button><span class="toast-progress" aria-hidden="true"></span></div>
+</body>
+</html>
