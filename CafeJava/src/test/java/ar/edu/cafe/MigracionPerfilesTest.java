@@ -24,11 +24,11 @@ class MigracionPerfilesTest {
             assertThat(dao.listar(false)).hasSize(2);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM pedidos WHERE perfil_mozo_id IS NOT NULL", Integer.class)).isEqualTo(3);
             assertThat(jdbc.queryForObject("SELECT mozo FROM pedidos WHERE id=2", String.class)).isEqualTo(" gabi ");
-            Long gabi = jdbc.queryForObject("SELECT perfil_mozo_id FROM pedidos WHERE id=1", Long.class);
-            assertThat(jdbc.queryForObject("SELECT perfil_mozo_id FROM pedidos WHERE id=2", Long.class)).isEqualTo(gabi);
+            Integer gabi = jdbc.queryForObject("SELECT perfil_mozo_id FROM pedidos WHERE id=1", Integer.class);
+            assertThat(jdbc.queryForObject("SELECT perfil_mozo_id FROM pedidos WHERE id=2", Integer.class)).isEqualTo(gabi);
             dao.eliminar(gabi); migracion.run(args);
             assertThat(dao.listar(false)).hasSize(1);
-            assertThat(jdbc.queryForObject("SELECT perfil_mozo_id FROM pedidos WHERE id=1", Long.class)).isEqualTo(gabi);
+            assertThat(jdbc.queryForObject("SELECT perfil_mozo_id FROM pedidos WHERE id=1", Integer.class)).isEqualTo(gabi);
         } finally {
             ((org.springframework.jdbc.datasource.SingleConnectionDataSource) jdbc.getDataSource()).destroy();
         }

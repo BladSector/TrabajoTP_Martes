@@ -38,28 +38,28 @@ public class CafeController {
         this.perfiles = perfiles;
     }
 
-    public record MesaVista(Mesa mesa, Long cuentaId, double pendiente, List<Pedido> pedidos) { }
+    public record MesaVista(Mesa mesa, Integer cuentaId, double pendiente, List<Pedido> pedidos) { }
     public record ComandaVista(Pedido pedido, Mesa mesa) { }
     public record CuentaRespuesta(Cuenta cuenta) { }
     public record EstadoSistema(LocalDate fecha, boolean cerrado, String entornoFiscal, String baseDatos) { }
     public record ProductoSolicitud(@NotBlank @Size(max=200) String nombre, @Size(max=10000) String descripcion,
-            @NotNull @PositiveOrZero Double precio, boolean disponible, @NotNull @Positive Long categoriaId) { }
+            @NotNull @PositiveOrZero Double precio, boolean disponible, @NotNull @Positive Integer categoriaId) { }
     public record CategoriaSolicitud(@NotBlank @Size(max=100) String nombre) { }
     public record PerfilSolicitud(@NotBlank @Size(max=100) String nombre) { }
-    public record PedidoSolicitud(@NotNull @Positive Long productoId, @Min(1) @Max(1000) int cantidad,
+    public record PedidoSolicitud(@NotNull @Positive Integer productoId, @Min(1) @Max(1000) int cantidad,
             @Size(max=100) String mozo, @Size(max=100) String nombreCliente, @Size(max=1000) String notas,
-            @Positive Long perfilMozoId) { }
+            @Positive Integer perfilMozoId) { }
     public record ComandaSolicitud(@NotEmpty @Size(max=100) List<@NotNull @Valid PedidoSolicitud> pedidos) { }
-    public record CambioMenuSolicitud(@NotNull MenuService.Operacion tipo, @Positive Long id,
+    public record CambioMenuSolicitud(@NotNull MenuService.Operacion tipo, @Positive Integer id,
             @Valid ProductoSolicitud producto) { }
     public record CambiosMenuSolicitud(@NotEmpty @Size(max=100) List<@NotNull @Valid CambioMenuSolicitud> cambios) { }
-    public record CocinaSolicitud(@NotEmpty List<@NotNull @Positive Long> pedidosIds) { }
+    public record CocinaSolicitud(@NotEmpty List<@NotNull @Positive Integer> pedidosIds) { }
     public record EstadoSolicitud(@NotNull EstadoCocina estado) { }
-    public record EntregaSolicitud(@Size(max=100) String mozo, @Positive Long perfilMozoId) { }
-    public record ItemPagoSolicitud(@NotNull @Positive Long pedidoId, @Min(1) int cantidad) { }
+    public record EntregaSolicitud(@Size(max=100) String mozo, @Positive Integer perfilMozoId) { }
+    public record ItemPagoSolicitud(@NotNull @Positive Integer pedidoId, @Min(1) int cantidad) { }
     public record PagoSolicitud(@NotNull MetodoPago metodo, @NotEmpty List<@Valid ItemPagoSolicitud> detalles,
-            @Positive Double totalEfectivo) { }
-    public record PagoRespuesta(Pago pago, TicketElectronico ticket, boolean cuentaCerrada) { }
+            @Null(message="El total en efectivo es automatico; actualice la aplicacion") Double totalEfectivo) { }
+    public record PagoRespuesta(Pago pago, TicketElectronico ticket, boolean cuentaCerrada, boolean cuentaSaldada) { }
 
     @GetMapping("/perfiles")
     public List<PerfilMozo> listarPerfiles(@RequestParam(defaultValue="false") boolean incluirEliminados) {
@@ -68,10 +68,10 @@ public class CafeController {
     @PostMapping("/perfiles")
     public PerfilMozo guardarPerfil(@Valid @RequestBody PerfilSolicitud solicitud) { return perfiles.guardar(solicitud.nombre()); }
     @DeleteMapping("/perfiles/{id}")
-    public void eliminarPerfil(@PathVariable Long id) { perfiles.eliminar(id); }
+    public void eliminarPerfil(@PathVariable Integer id) { perfiles.eliminar(id); }
     @GetMapping("/pedidos/historial")
-    public List<ComandaVista> historialPedidos(@RequestParam(required=false) LocalDate fecha, @RequestParam(required=false) @Positive Long perfilId) {
-        Map<Long, Mesa> mesasPorCuenta = new HashMap<>();
+    public List<ComandaVista> historialPedidos(@RequestParam(required=false) LocalDate fecha, @RequestParam(required=false) @Positive Integer perfilId) {
+        Map<Integer, Mesa> mesasPorCuenta = new HashMap<>();
         return pedidos.consultarHistorial(fecha, perfilId).stream().map(pedido -> new ComandaVista(pedido,
                 mesasPorCuenta.computeIfAbsent(pedido.getCuentaId(), cuentaId -> mesas.obtenerCuenta(cuentaId).getMesa()))).toList();
     }
@@ -83,6 +83,7 @@ public class CafeController {
         return new EstadoSistema(fecha, cierres.existeCierre(fecha), fiscal.getEntorno(), demo ? "DEMO" : "MYSQL");
     }
     @GetMapping("/mesas")
+    @org.springframework.transaction.annotation.Transactional(readOnly=true)
     public List<MesaVista> listarMesas() {
         return mesas.listarMesas().stream().map(mesa -> {
             Cuenta cuenta = mesas.obtenerCuentaAbierta(mesa.getId()).orElse(null);
@@ -90,17 +91,17 @@ public class CafeController {
                     .mapToDouble(p -> p.getPrecioUnitario() * p.obtenerCantidadPendienteDePago())
                     .sum());
             return new MesaVista(mesa, cuenta == null ? null : cuenta.getId(), pendiente,
-                    cuenta == null ? List.of() : cuenta.getPedidos());
+                    mesas.listarPedidosMesa(mesa.getId()));
         }).toList();
     }
     @GetMapping("/mesas/{id}/cuenta")
-    public CuentaRespuesta cuentaMesa(@PathVariable Long id) { return new CuentaRespuesta(mesas.obtenerCuentaAbierta(id).orElse(null)); }
+    public CuentaRespuesta cuentaMesa(@PathVariable Integer id) { return new CuentaRespuesta(mesas.obtenerCuentaAbierta(id).orElse(null)); }
     @PostMapping("/mesas/{id}/cuenta")
-    public Cuenta abrirCuenta(@PathVariable Long id) { return mesas.abrirCuenta(id); }
+    public Cuenta abrirCuenta(@PathVariable Integer id) { return mesas.abrirCuenta(id); }
     @GetMapping("/cuentas/{id}")
-    public Cuenta cuenta(@PathVariable Long id) { return mesas.obtenerCuenta(id); }
+    public Cuenta cuenta(@PathVariable Integer id) { return mesas.obtenerCuenta(id); }
     @PostMapping("/cuentas/{id}/cerrar")
-    public void cerrarCuenta(@PathVariable Long id) { mesas.cerrarCuenta(id); }
+    public void cerrarCuenta(@PathVariable Integer id) { mesas.cerrarCuenta(id); }
 
     @GetMapping("/menu")
     public List<Producto> productos() { return menu.listarProductos(); }
@@ -124,14 +125,14 @@ public class CafeController {
     @PostMapping("/menu")
     public Producto crearProducto(@Valid @RequestBody ProductoSolicitud solicitud) { return menu.crearProducto(producto(solicitud)); }
     @PutMapping("/menu/{id}")
-    public void actualizarProducto(@PathVariable Long id, @Valid @RequestBody ProductoSolicitud solicitud) {
+    public void actualizarProducto(@PathVariable Integer id, @Valid @RequestBody ProductoSolicitud solicitud) {
         Producto producto = producto(solicitud); producto.setId(id); menu.actualizarProducto(producto);
     }
     @DeleteMapping("/menu/{id}")
-    public void eliminarProducto(@PathVariable Long id) { menu.eliminarProducto(id); }
+    public void eliminarProducto(@PathVariable Integer id) { menu.eliminarProducto(id); }
 
     @PostMapping("/cuentas/{id}/pedidos")
-    public Pedido agregarPedido(@PathVariable Long id, @Valid @RequestBody PedidoSolicitud solicitud) {
+    public Pedido agregarPedido(@PathVariable Integer id, @Valid @RequestBody PedidoSolicitud solicitud) {
         return pedidos.agregarPedido(id, pedido(solicitud));
     }
     private Pedido pedido(PedidoSolicitud solicitud) {
@@ -142,17 +143,17 @@ public class CafeController {
         return pedido;
     }
     @PostMapping("/mesas/{id}/comandas")
-    public Cuenta enviarComanda(@PathVariable Long id, @Valid @RequestBody ComandaSolicitud solicitud) {
+    public Cuenta enviarComanda(@PathVariable Integer id, @Valid @RequestBody ComandaSolicitud solicitud) {
         return pedidos.enviarComanda(id, solicitud.pedidos().stream().map(this::pedido).toList());
     }
     @GetMapping("/cocina")
     public List<ComandaVista> cocina() {
-        Map<Long, Mesa> mesasPorCuenta = new HashMap<>();
+        Map<Integer, Mesa> mesasPorCuenta = new HashMap<>();
         return pedidos.listarParaCocina().stream().map(pedido -> new ComandaVista(pedido,
                 mesasPorCuenta.computeIfAbsent(pedido.getCuentaId(), cuentaId -> mesas.obtenerCuenta(cuentaId).getMesa()))).toList();
     }
     @PostMapping("/cuentas/{id}/cocina")
-    public void enviarCocina(@PathVariable Long id, @Valid @RequestBody CocinaSolicitud solicitud) {
+    public void enviarCocina(@PathVariable Integer id, @Valid @RequestBody CocinaSolicitud solicitud) {
         Cuenta cuenta = mesas.obtenerCuenta(id);
         var propios = cuenta.getPedidos().stream().map(Pedido::getId).toList();
         if (!propios.containsAll(solicitud.pedidosIds())) throw new IllegalArgumentException("Hay pedidos de otra cuenta");
@@ -162,19 +163,19 @@ public class CafeController {
         pedidos.enviarACocina(referencias);
     }
     @PostMapping("/pedidos/{id}/cancelar")
-    public void cancelarPedido(@PathVariable Long id) { pedidos.cancelarPedido(id); }
+    public void cancelarPedido(@PathVariable Integer id) { pedidos.cancelarPedido(id); }
     @PutMapping("/pedidos/{id}/estado")
-    public void estadoPedido(@PathVariable Long id, @Valid @RequestBody EstadoSolicitud solicitud) {
+    public void estadoPedido(@PathVariable Integer id, @Valid @RequestBody EstadoSolicitud solicitud) {
         pedidos.cambiarEstado(id, solicitud.estado());
     }
     @PostMapping("/pedidos/{id}/entregar")
-    public void entregarPedido(@PathVariable Long id, @Valid @RequestBody EntregaSolicitud solicitud) {
+    public void entregarPedido(@PathVariable Integer id, @Valid @RequestBody EntregaSolicitud solicitud) {
         if (solicitud.perfilMozoId() != null) pedidos.confirmarEntrega(id, solicitud.perfilMozoId());
         else pedidos.confirmarEntrega(id, solicitud.mozo());
     }
     @PostMapping("/cuentas/{id}/pagos")
-    public PagoRespuesta pagar(@PathVariable Long id, @Valid @RequestBody PagoSolicitud solicitud) {
-        Pago pago = new Pago(); pago.setMetodo(solicitud.metodo()); pago.setTotal(solicitud.totalEfectivo() == null ? 0.0 : solicitud.totalEfectivo());
+    public PagoRespuesta pagar(@PathVariable Integer id, @Valid @RequestBody PagoSolicitud solicitud) {
+        Pago pago = new Pago(); pago.setMetodo(solicitud.metodo());
         List<DetallePago> detalles = new ArrayList<>();
         for (ItemPagoSolicitud item : solicitud.detalles()) {
             Pedido pedido = new Pedido(); pedido.setId(item.pedidoId());
@@ -182,17 +183,18 @@ public class CafeController {
         }
         pago.setDetalles(detalles);
         Pago registrado = pagos.registrarPago(id, pago);
+        Cuenta cuenta = mesas.obtenerCuenta(id);
         return new PagoRespuesta(registrado, tickets.obtenerPorPago(registrado.getId()),
-                mesas.obtenerCuenta(id).getEstado() == EstadoCuenta.CERRADA);
+                cuenta.getEstado() == EstadoCuenta.CERRADA, cuenta.estaSaldada());
     }
     @GetMapping("/tickets")
     public List<TicketElectronico> historialTickets() { return tickets.consultarHistorial(); }
     @GetMapping("/tickets/{id}")
-    public TicketElectronico ticket(@PathVariable Long id) { return tickets.obtenerTicket(id); }
+    public TicketElectronico ticket(@PathVariable Integer id) { return tickets.obtenerTicket(id); }
     @GetMapping(value="/tickets/{id}/texto", produces="text/plain;charset=UTF-8")
-    public String textoTicket(@PathVariable Long id) { return impresion.generarContenido(tickets.obtenerTicket(id)); }
+    public String textoTicket(@PathVariable Integer id) { return impresion.generarContenido(tickets.obtenerTicket(id)); }
     @PostMapping("/tickets/{id}/imprimir")
-    public void imprimirTicket(@PathVariable Long id) {
+    public void imprimirTicket(@PathVariable Integer id) {
         if (!impresion.imprimirTicket(tickets.obtenerTicket(id))) {
             throw new IllegalArgumentException("Impresora no configurada o formato no compatible; puede imprimir desde el navegador");
         }

@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class CierreDiario {
-    private Long id;
+    private Integer id;
     private LocalDate fecha;
     private LocalDateTime fechaHoraCierre;
     private int numeroInforme;
@@ -32,8 +32,8 @@ public class CierreDiario {
         }
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public LocalDate getFecha() { return fecha; }
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }

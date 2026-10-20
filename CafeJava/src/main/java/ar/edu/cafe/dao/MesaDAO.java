@@ -13,7 +13,7 @@ public class MesaDAO extends JdbcDAO {
 
     private final RowMapper<Mesa> mapper = (rs, fila) -> {
         Mesa mesa = new Mesa();
-        mesa.setId(rs.getLong("id"));
+        mesa.setId(rs.getInt("id"));
         mesa.setNombre(rs.getString("nombre"));
         mesa.setEstado(EstadoMesa.valueOf(rs.getString("estado")));
         mesa.setEsTakeAway(rs.getBoolean("es_take_away"));
@@ -21,7 +21,7 @@ public class MesaDAO extends JdbcDAO {
     };
 
     public List<Mesa> listar() { return jdbc.query("SELECT * FROM mesas ORDER BY id", mapper); }
-    public Optional<Mesa> buscarPorId(Long id) {
+    public Optional<Mesa> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM mesas WHERE id=?", mapper, id).stream().findFirst();
     }
     public Mesa guardar(Mesa mesa) {

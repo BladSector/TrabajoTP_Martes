@@ -21,6 +21,8 @@ El modelo y los servicios pertenecen a capas diferentes. Aqui se muestran las en
 
 En Mermaid, `List~Pedido~` representa `List<Pedido>`. Los constructores implicitos no se detallan. Se muestran las multiplicidades del negocio para operaciones validas; un objeto recien creado puede tener listas vacias antes de registrarse.
 
+`Integer` es la version objeto de `int` y representa un entero de 32 bits. Se usa en identificadores y numero de comprobante porque pueden valer `null` antes de asignarse. Los atributos de cantidad y los contadores siguen usando `int`. Los importes siguen usando `double`.
+
 ## 2. Entidades del negocio
 
 Son once clases. `Cuenta` representa una atencion de una mesa, no un usuario ni un perfil de mozo.
@@ -31,7 +33,7 @@ Son once clases. `Cuenta` representa una atencion de una mesa, no un usuario ni 
 classDiagram
     direction LR
     class Mesa {
-        -Long id
+        -Integer id
         -String nombre
         -EstadoMesa estado
         -boolean esTakeAway
@@ -40,12 +42,11 @@ classDiagram
         +estaLibre() boolean
     }
     class Categoria {
-        -Long id
+        -Integer id
         -String nombre
-        +cambiarNombre(String nombre) void
     }
     class Producto {
-        -Long id
+        -Integer id
         -String nombre
         -String descripcion
         -double precio
@@ -56,14 +57,14 @@ classDiagram
         +cambiarDisponibilidad(boolean disponible) void
     }
     class PerfilMozo {
-        -Long id
+        -Integer id
         -String nombre
         -LocalDateTime fechaCreacion
         -boolean eliminado
     }
     class Pedido {
-        -Long id
-        -Long cuentaId
+        -Integer id
+        -Integer cuentaId
         -Producto producto
         -String nombreProducto
         -int cantidad
@@ -71,7 +72,7 @@ classDiagram
         -LocalDateTime fechaHora
         -EstadoCocina estadoCocina
         -String mozo
-        -Long perfilMozoId
+        -Integer perfilMozoId
         -String nombreCliente
         -String notas
         -int cantidadPagada
@@ -84,7 +85,7 @@ classDiagram
         +cancelar() void
     }
     class Cuenta {
-        -Long id
+        -Integer id
         -Mesa mesa
         -LocalDateTime fechaApertura
         -LocalDateTime fechaCierre
@@ -95,18 +96,20 @@ classDiagram
         +calcularSubtotal() double
         +obtenerPedidosPendientesDePago() List~Pedido~
         +estaSaldada() boolean
+        +obtenerPedidosPendientesDeEntrega() List~Pedido~
+        +puedeCerrarse() boolean
         +cerrar() void
     }
     class DetallePago {
-        -Long id
+        -Integer id
         -Pedido pedido
         -int cantidad
         -double precioUnitario
         +calcularImporte() double
     }
     class Pago {
-        -Long id
-        -Long cuentaId
+        -Integer id
+        -Integer cuentaId
         -LocalDateTime fechaHora
         -MetodoPago metodo
         -double subtotal
@@ -118,7 +121,7 @@ classDiagram
         +calcularTotal() double
     }
     class ItemTicket {
-        -Long id
+        -Integer id
         -String codigoProducto
         -String descripcion
         -int cantidad
@@ -128,7 +131,7 @@ classDiagram
         +calcularIva() double
     }
     class TicketElectronico {
-        -Long id
+        -Integer id
         -String codigo
         -Pago pago
         -LocalDateTime fechaEmision
@@ -147,15 +150,15 @@ classDiagram
         -String domicilioEmisor
         -String condicionIvaEmisor
         -int puntoVenta
-        -Long numeroComprobante
+        -Integer numeroComprobante
         -String cae
         -LocalDate vencimientoCae
         +calcularTotales() void
-        +registrarAutorizacion(Long numero, String cae, LocalDate vencimiento) void
+        +registrarAutorizacion(Integer numero, String cae, LocalDate vencimiento) void
         +registrarRechazo() void
     }
     class CierreDiario {
-        -Long id
+        -Integer id
         -LocalDate fecha
         -LocalDateTime fechaHoraCierre
         -int numeroInforme
@@ -280,11 +283,13 @@ classDiagram
 
 ## 5. Detalles importantes para explicar en clase
 
+- `Categoria` tiene atributos y accesores, sin metodos propios adicionales. La creacion se coordina en `MenuService.crearCategoria(Categoria)` y se persiste mediante `CategoriaDAO.guardar(Categoria)`. Actualmente no existe una operacion para eliminar ni renombrar categorias.
 - `PerfilMozo` tiene atributos, pero no tiene metodos propios fuera de los accesores. Guardar, listar y eliminar perfiles se coordina en `PerfilMozoService`; no se inventan esos metodos dentro del modelo.
 - `Producto` representa el catalogo actual. `Pedido.nombreProducto` y `Pedido.precioUnitario` guardan una copia historica: no son datos redundantes que deban consultarse siempre desde el producto actualizado.
 - `Pedido.mozo` guarda el nombre al registrar el pedido; `perfilMozoId` identifica al perfil. El historial no desaparece al eliminar logicamente ese perfil.
 - `ItemTicket.codigoProducto` es un `String`. No se dibuja como si el item tuviera un atributo `Producto producto`, porque no existe en esa clase.
 - `CierreDiario` conserva totales, no una lista de tickets ni una coleccion de pagos.
+- `Cuenta.estaSaldada()` solo evalua pagos. `puedeCerrarse()` exige ademas que no queden entregas pendientes; cobrar no equivale a entregar.
 - En `TicketElectronico` existen campos como `cae` y `vencimientoCae`, pero la integracion fiscal actual es una simulacion; dibujarlos no implica que haya autorizacion fiscal real.
 - Las clases no heredan unas de otras en este modelo. No se agrega una superclase `Persona`, `Usuario` o `Entidad` que no exista en el codigo.
 

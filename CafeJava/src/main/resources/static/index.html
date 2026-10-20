@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Positivo Caf&eacute;</title>
   <link rel="icon" href="/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=perfiles-20261018">
+  <link rel="stylesheet" href="/styles.css?v=pago-entrega-20261020">
   <script defer src="/lucide.min.js"></script>
-  <script defer src="/app.js?v=perfiles-20261018"></script>
+  <script defer src="/app.js?v=pago-entrega-20261020"></script>
 </head>
 <body>
   <header class="app-header">
@@ -121,7 +121,6 @@
     <div class="dialog-header"><h2>Pagar cuenta &middot; <span id="pagoMesaNombre"></span></h2><button type="button" class="icon-button close-dialog" title="Cerrar" aria-label="Cerrar"><i data-lucide="x"></i></button></div>
     <div class="payment-layout"><section><div class="section-title"><h3>Consumos a pagar</h3><label class="checkbox-label"><input id="seleccionarTodos" type="checkbox" checked>Todos</label></div><div id="pagoItems" class="payment-items"></div></section>
       <section class="payment-summary"><fieldset class="payment-methods"><legend>Medio de pago</legend><label><input type="radio" name="metodo" value="EFECTIVO" checked><i data-lucide="banknote"></i>Efectivo</label><label><input type="radio" name="metodo" value="TARJETA"><i data-lucide="credit-card"></i>Tarjeta</label></fieldset>
-        <label id="totalEfectivoLabel">Total redondeado en efectivo (opcional)<input id="totalEfectivo" type="number" step="0.01" min="0.01" placeholder="Descuento automatico" aria-describedby="redondeoRango redondeoError"><small id="redondeoRango"></small><span id="redondeoError" class="field-error" role="alert" hidden></span></label>
         <dl class="payment-totals"><div><dt>Subtotal</dt><dd id="pagoSubtotal"></dd></div><div><dt>Descuento efectivo</dt><dd id="pagoDescuento"></dd></div><div><dt>Total</dt><dd id="pagoTotal"></dd></div></dl>
         <button type="submit" id="confirmarPago" class="success"><i data-lucide="check"></i>Confirmar pago</button>
       </section>

@@ -60,6 +60,7 @@ h3 { font-size: 15px; font-weight: 650; }
 .legend { display: inline-flex; align-items: center; gap: 6px; color: #65737d; font-size: 12px; }
 .dot { height: 8px; width: 8px; border-radius: 50%; flex: none; }
 .free { background: #198754; }.occupied { background: #dd9a18; }
+.consumo-line .paid-status { color: #198754; font-weight: 600; }
 .mesa-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; align-items: start; }
 .mesa-card { border: 1px solid #dce2e5; border-radius: 6px; background: white; overflow: hidden; }
 .mesa-card-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 17px; gap: 8px; border-bottom: 1px solid #e4e8eb; background: #f1f8f4; }
@@ -74,7 +75,8 @@ h3 { font-size: 15px; font-weight: 650; }
 .badge { display: inline-flex; align-items: center; font-size: 10px; border-radius: 4px; padding: 3px 7px; color: #62717b; background: #e9edf0; white-space: nowrap; }
 .badge.free { background: #dbefe4; color: #24734c; }.badge.occupied { background: #ffedc5; color: #926400; }
 .badge.pending { background: #fff0c9; color: #92680b; }.badge.preparing { background: #fce6d8; color: #a45222; }.badge.ready { background: #dceee2; color: #287247; }.badge.draft { background: #ebe5f4; color: #745492; }
-.mesa-summary { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: #6d7a84; font-size: 12px; }
+.mesa-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; color: #6d7a84; font-size: 12px; }
+.mesa-summary > span { min-width: 0; }
 .mesa-summary strong { font-size: 17px; color: #313c45; }
 details summary { cursor: pointer; font-size: 12px; color: #476077; }
 details[open] summary { margin-bottom: 10px; }
@@ -105,8 +107,6 @@ label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-w
 input, select, textarea { width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid #d2dae0; border-radius: 4px; background: #fff; color: #293640; min-height: 37px; font-size: 13px; }
 input[type=checkbox], input[type=radio] { width: 16px; height: 16px; min-height: 0; flex: none; accent-color: #0d6efd; }
 input[aria-invalid=true] { border-color: #bb3448; }
-.field-error { color: #a12d43; font-size: 12px; font-weight: 400; overflow-wrap: anywhere; }
-#redondeoRango { font-size: 11px; font-weight: 400; color: #687782; overflow-wrap: anywhere; }
 .checkbox-label { flex-direction: row; align-items: center; gap: 8px; }
 .search { position: relative; flex: 1; }
 .search svg { position: absolute; left: 11px; top: 10px; color: #83919b; }.search input { padding-left: 36px; }

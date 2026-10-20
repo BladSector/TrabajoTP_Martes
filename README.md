@@ -29,6 +29,8 @@ Este README esta dirigido a los integrantes del trabajo practico. Describe lo qu
 
 Los importes del modelo Java usan `double`, con ajustes a dos decimales mediante `Dinero`. Las columnas de importes en SQL usan `DECIMAL`.
 
+Los identificadores usan `Integer`, la version objeto de `int`: a diferencia del tipo primitivo, permite `null` antes de guardar una entidad o cuando un dato es opcional. Las cantidades y contadores usan `int`. Los DAO y la API manejan identificadores de 32 bits; las tablas SQL existentes conservan sus tipos para no modificar los datos guardados.
+
 ## 2. Personas, pantallas y conceptos
 
 | Concepto | Significado |
@@ -65,8 +67,8 @@ Los perfiles de ejecucion de Spring (`mysql` y `demo`) eligen la base de datos; 
 | RF-13 | Cancelar pedidos de cuentas abiertas que todavia no tengan cantidades pagadas, sin borrar su registro. |
 | RF-14 | Exigir nombre de cliente en Take Away y permitir separar sus consumos al cobrar. |
 | RF-15 | Cobrar toda la cuenta o cantidades parciales de los pedidos, con efectivo o tarjeta como medio registrado. |
-| RF-16 | Aplicar 10 % de descuento en efectivo y admitir un total manual dentro de un margen del 5 % respecto del total ya descontado. |
-| RF-17 | Generar un ticket por pago y liberar la mesa cuando no queden consumos pendientes de pago. |
+| RF-16 | Aplicar automaticamente 10 % de descuento en efectivo, sin total manual ni rango configurable. Tarjeta no tiene descuento. |
+| RF-17 | Generar un ticket por pago y liberar la mesa cuando todos los consumos esten pagados y entregados o cancelados. |
 | RF-18 | Consultar e imprimir tickets; la impresion directa depende de que exista una impresora compatible configurada. |
 | RF-19 | Crear categorias y crear, editar, cambiar disponibilidad o eliminar logicamente platos, con cambios de platos aplicados en lote. |
 | RF-20 | Consultar el registro de pedidos por fecha y perfil, incluyendo los pedidos de perfiles eliminados. |
@@ -133,16 +135,16 @@ Los avisos se consultan aproximadamente cada tres segundos, incluso mientras el 
 1. Abrir Pagar cuenta y seleccionar los productos y cantidades a cobrar.
 2. Elegir efectivo o tarjeta.
 3. El servidor calcula los importes usando los precios guardados en los pedidos.
-4. En efectivo, aplica el descuento del 10 %; opcionalmente se puede indicar un total redondeado valido.
+4. En efectivo, aplica automaticamente el descuento del 10 %, sin ingresar un total manual.
 5. Confirmar el pago.
 6. El sistema registra el pago, sus detalles, las cantidades pagadas y el ticket en una misma transaccion.
-7. Si queda saldo, mantiene la cuenta abierta. Si no queda saldo, la cierra y libera la mesa.
+7. Mantiene la cuenta y la mesa ocupada mientras haya saldo o pedidos sin entregar. Cuando se cumplen ambas condiciones, cierra la cuenta y libera la mesa.
 
-**Ejemplo de efectivo:** para un subtotal de $10.000, el total con descuento es $9.000. El total manual admitido va de $8.550 a $9.450. Los limites se ajustan a centavos sin ampliar el margen. Tarjeta no tiene descuento y no utiliza ese redondeo.
+**Ejemplo de efectivo:** para un subtotal de $10.000, el total automatico es $9.000. Tarjeta cobra $10.000. El comprobante y el resumen de Tickets no muestran el renglon de descuento; el dato contable se conserva internamente y en el cierre diario.
 
 **Alternativas:** no se permite pagar cantidades superiores a lo pendiente, pedidos cancelados o de otra cuenta. Si falla la emision del ticket, se revierte todo el pago. Una falla de impresion posterior no deshace un pago ya confirmado.
 
-**Importante:** se puede cobrar antes de entregar. Un pedido pagado sigue en cocina hasta su entrega, aunque la cuenta ya este cerrada y la mesa haya quedado libre.
+**Importante:** se puede cobrar antes de entregar. Un pedido pagado sigue visible en la mesa y cocina, con su cantidad original y la marca Pagado, hasta la entrega. Un pedido entregado sin pagar tambien sigue visible hasta el cobro. No se ofrece volver a cobrar lo ya pagado. Los pedidos sin entregar de cuentas cerradas por versiones anteriores tambien se recuperan en el mapa sin reabrir ni alterar su historial.
 
 ### CF-05. Atender Take Away
 
@@ -166,7 +168,7 @@ Los avisos se consultan aproximadamente cada tres segundos, incluso mientras el 
 
 **Resultado:** se actualiza el catalogo para pedidos futuros. Cambiar el nombre o precio de un producto no modifica los pedidos historicos, porque estos guardan una copia de esos datos.
 
-**Caso relacionado:** desde los consumos de una cuenta se puede cancelar un pedido sin pagos. La cancelacion conserva el registro y deja de considerarlo pendiente de cobro; no equivale a eliminar el producto del menu.
+**Caso relacionado:** desde los consumos de una cuenta se puede cancelar un pedido sin pagos. La cancelacion conserva el registro y deja de considerarlo pendiente de cobro y entrega; no equivale a eliminar el producto del menu. Si no quedan pagos ni entregas pendientes, libera automaticamente la mesa.
 
 ### CF-07. Consultar quien registro cada pedido
 
@@ -365,7 +367,7 @@ Desde `CafeJava`, ejecutar:
 mvn test
 ```
 
-Las pruebas Java usan H2 temporal en memoria, no la base MySQL del equipo. Cubren pagos parciales, descuentos y redondeo, validaciones, rollback de operaciones, cobros simultaneos, Take Away, cocina y entregas, perfiles, historial, migracion y cierre diario.
+Las pruebas Java usan H2 temporal en memoria, no la base MySQL del equipo. Cubren pagos parciales, descuento automatico, validaciones, rollback de operaciones, cobros simultaneos, pago y entrega concurrentes, Take Away, cocina y entregas, perfiles, historial, migracion y cierre diario.
 
 `scripts/browser-check.cjs` recorre la interfaz con Playwright y Edge en escritorio y movil. Es una prueba adicional que registra operaciones y cierra la jornada de prueba: debe usarse con una instancia de demostracion temporal preparada para ese fin, nunca con datos reales.
 

@@ -13,7 +13,7 @@ public class CierreDiarioDAO extends JdbcDAO {
     public CierreDiarioDAO(JdbcTemplate jdbc) { super(jdbc); }
     private final RowMapper<CierreDiario> mapper = (rs, fila) -> {
         CierreDiario cierre = new CierreDiario();
-        cierre.setId(rs.getLong("id")); cierre.setFecha(rs.getDate("fecha").toLocalDate());
+        cierre.setId(rs.getInt("id")); cierre.setFecha(rs.getDate("fecha").toLocalDate());
         cierre.setFechaHoraCierre(rs.getTimestamp("fecha_hora_cierre").toLocalDateTime());
         cierre.setNumeroInforme(rs.getInt("numero_informe")); cierre.setCantidadTickets(rs.getInt("cantidad_tickets"));
         cierre.setTotalEfectivo(rs.getDouble("total_efectivo")); cierre.setTotalTarjeta(rs.getDouble("total_tarjeta"));

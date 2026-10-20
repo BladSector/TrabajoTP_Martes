@@ -14,24 +14,32 @@ public class PedidoDAO extends JdbcDAO {
     private RowMapper<Pedido> mapper() {
         return (rs, fila) -> {
             Pedido pedido = new Pedido();
-            pedido.setId(rs.getLong("id")); pedido.setCuentaId(rs.getLong("cuenta_id"));
-            pedido.setProducto(productoDAO.buscarPorId(rs.getLong("producto_id")).orElseThrow());
+            pedido.setId(rs.getInt("id")); pedido.setCuentaId(rs.getInt("cuenta_id"));
+            pedido.setProducto(productoDAO.buscarPorId(rs.getInt("producto_id")).orElseThrow());
             pedido.setNombreProducto(rs.getString("nombre_producto"));
             pedido.setCantidad(rs.getInt("cantidad")); pedido.setCantidadPagada(rs.getInt("cantidad_pagada"));
             pedido.setPrecioUnitario(rs.getDouble("precio_unitario"));
             pedido.setFechaHora(rs.getTimestamp("fecha_hora").toLocalDateTime());
             pedido.setEstadoCocina(EstadoCocina.valueOf(rs.getString("estado_cocina")));
             pedido.setMozo(rs.getString("mozo")); pedido.setNombreCliente(rs.getString("nombre_cliente"));
-            pedido.setPerfilMozoId(rs.getObject("perfil_mozo_id", Long.class));
+            pedido.setPerfilMozoId(rs.getObject("perfil_mozo_id", Integer.class));
             pedido.setNotas(rs.getString("notas")); pedido.setCancelado(rs.getBoolean("cancelado"));
             return pedido;
         };
     }
-    public Optional<Pedido> buscarPorId(Long id) {
+    public Optional<Pedido> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM pedidos WHERE id=?", mapper(), id).stream().findFirst();
     }
-    public List<Pedido> listarPorCuenta(Long cuentaId) {
+    public List<Pedido> listarPorCuenta(Integer cuentaId) {
         return jdbc.query("SELECT * FROM pedidos WHERE cuenta_id=? ORDER BY id", mapper(), cuentaId);
+    }
+    public List<Pedido> listarPorMesaConPendientes(Integer mesaId) {
+        return jdbc.query("""
+                SELECT p.* FROM pedidos p JOIN cuentas c ON c.id=p.cuenta_id
+                WHERE c.mesa_id=? AND (c.estado='ABIERTA'
+                  OR (p.cancelado=FALSE AND p.estado_cocina<>'ENTREGADO'))
+                ORDER BY p.id
+                """, mapper(), mesaId);
     }
     public List<Pedido> listarParaCocina() {
         return jdbc.query("""
@@ -40,7 +48,7 @@ public class PedidoDAO extends JdbcDAO {
                 ORDER BY fecha_hora,id
                 """, mapper());
     }
-    public List<Pedido> consultarHistorial(java.time.LocalDate fecha, Long perfilId) {
+    public List<Pedido> consultarHistorial(java.time.LocalDate fecha, Integer perfilId) {
         String sql = "SELECT * FROM pedidos WHERE fecha_hora>=? AND fecha_hora<?";
         if (perfilId == null) return jdbc.query(sql + " ORDER BY fecha_hora DESC,id DESC", mapper(), fecha.atStartOfDay(), fecha.plusDays(1).atStartOfDay());
         return jdbc.query(sql + " AND perfil_mozo_id=? ORDER BY fecha_hora DESC,id DESC", mapper(), fecha.atStartOfDay(), fecha.plusDays(1).atStartOfDay(), perfilId);

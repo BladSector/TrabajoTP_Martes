@@ -16,8 +16,8 @@ public class TicketDAO extends JdbcDAO {
     private RowMapper<TicketElectronico> mapper() {
         return (rs, fila) -> {
             TicketElectronico ticket = new TicketElectronico();
-            ticket.setId(rs.getLong("id")); ticket.setCodigo(rs.getString("codigo"));
-            ticket.setPago(pagoDAO.buscarPorId(rs.getLong("pago_id")).orElseThrow());
+            ticket.setId(rs.getInt("id")); ticket.setCodigo(rs.getString("codigo"));
+            ticket.setPago(pagoDAO.buscarPorId(rs.getInt("pago_id")).orElseThrow());
             ticket.setFechaEmision(rs.getTimestamp("fecha_emision").toLocalDateTime());
             ticket.setSubtotal(rs.getDouble("subtotal")); ticket.setDescuento(rs.getDouble("descuento"));
             ticket.setIva(rs.getDouble("iva")); ticket.setTotal(rs.getDouble("total"));
@@ -27,17 +27,17 @@ public class TicketDAO extends JdbcDAO {
             ticket.setRazonSocialCliente(rs.getString("razon_social_cliente"));
             ticket.setRazonSocialEmisor(rs.getString("razon_social_emisor")); ticket.setCuitEmisor(rs.getString("cuit_emisor"));
             ticket.setDomicilioEmisor(rs.getString("domicilio_emisor")); ticket.setCondicionIvaEmisor(rs.getString("condicion_iva_emisor"));
-            ticket.setPuntoVenta(rs.getInt("punto_venta")); ticket.setNumeroComprobante(rs.getObject("numero_comprobante", Long.class));
+            ticket.setPuntoVenta(rs.getInt("punto_venta")); ticket.setNumeroComprobante(rs.getObject("numero_comprobante", Integer.class));
             ticket.setCae(rs.getString("cae")); Date fecha = rs.getDate("vencimiento_cae");
             ticket.setVencimientoCae(fecha == null ? null : fecha.toLocalDate());
             ticket.setItems(listarItems(ticket.getId()));
             return ticket;
         };
     }
-    private List<ItemTicket> listarItems(Long ticketId) {
+    private List<ItemTicket> listarItems(Integer ticketId) {
         return jdbc.query("SELECT * FROM items_ticket WHERE ticket_id=? ORDER BY id", (rs, fila) -> {
             ItemTicket item = new ItemTicket();
-            item.setId(rs.getLong("id")); item.setCodigoProducto(rs.getString("codigo_producto"));
+            item.setId(rs.getInt("id")); item.setCodigoProducto(rs.getString("codigo_producto"));
             item.setDescripcion(rs.getString("descripcion")); item.setCantidad(rs.getInt("cantidad"));
             item.setPrecioUnitario(rs.getDouble("precio_unitario")); item.setAlicuotaIva(rs.getDouble("alicuota_iva"));
             return item;
@@ -50,10 +50,10 @@ public class TicketDAO extends JdbcDAO {
         return jdbc.query("SELECT * FROM tickets WHERE fecha_emision>=? AND fecha_emision<? ORDER BY id",
                 mapper(), fecha.atStartOfDay(), fecha.plusDays(1).atStartOfDay());
     }
-    public Optional<TicketElectronico> buscarPorId(Long id) {
+    public Optional<TicketElectronico> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM tickets WHERE id=?", mapper(), id).stream().findFirst();
     }
-    public Optional<TicketElectronico> buscarPorPagoId(Long pagoId) {
+    public Optional<TicketElectronico> buscarPorPagoId(Integer pagoId) {
         return jdbc.query("SELECT * FROM tickets WHERE pago_id=?", mapper(), pagoId).stream().findFirst();
     }
     public TicketElectronico guardar(TicketElectronico ticket) {

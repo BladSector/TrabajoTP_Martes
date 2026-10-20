@@ -3,8 +3,8 @@ package ar.edu.cafe.model;
 import java.time.LocalDateTime;
 
 public class Pedido {
-    private Long id;
-    private Long cuentaId;
+    private Integer id;
+    private Integer cuentaId;
     private Producto producto;
     private String nombreProducto;
     private int cantidad;
@@ -12,7 +12,7 @@ public class Pedido {
     private LocalDateTime fechaHora;
     private EstadoCocina estadoCocina = EstadoCocina.BORRADOR;
     private String mozo;
-    private Long perfilMozoId;
+    private Integer perfilMozoId;
     private String nombreCliente = "";
     private String notas = "";
     private int cantidadPagada;
@@ -38,11 +38,11 @@ public class Pedido {
         cancelado = true;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public Long getCuentaId() { return cuentaId; }
-    public void setCuentaId(Long cuentaId) { this.cuentaId = cuentaId; }
+    public Integer getCuentaId() { return cuentaId; }
+    public void setCuentaId(Integer cuentaId) { this.cuentaId = cuentaId; }
 
     public Producto getProducto() { return producto; }
     public void setProducto(Producto producto) { this.producto = producto; }
@@ -65,8 +65,8 @@ public class Pedido {
     public String getMozo() { return mozo; }
     public void setMozo(String mozo) { this.mozo = mozo; }
 
-    public Long getPerfilMozoId() { return perfilMozoId; }
-    public void setPerfilMozoId(Long perfilMozoId) { this.perfilMozoId = perfilMozoId; }
+    public Integer getPerfilMozoId() { return perfilMozoId; }
+    public void setPerfilMozoId(Integer perfilMozoId) { this.perfilMozoId = perfilMozoId; }
 
     public String getNombreCliente() { return nombreCliente; }
     public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }

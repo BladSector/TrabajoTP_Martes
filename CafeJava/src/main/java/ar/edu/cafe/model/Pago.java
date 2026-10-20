@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Pago {
-    private Long id;
-    private Long cuentaId;
+    private Integer id;
+    private Integer cuentaId;
     private LocalDateTime fechaHora;
     private MetodoPago metodo;
     private double subtotal = Dinero.CERO;
@@ -25,11 +25,11 @@ public class Pago {
     }
     public double calcularTotal() { total = Dinero.redondear(subtotal - descuento); return total; }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public Long getCuentaId() { return cuentaId; }
-    public void setCuentaId(Long cuentaId) { this.cuentaId = cuentaId; }
+    public Integer getCuentaId() { return cuentaId; }
+    public void setCuentaId(Integer cuentaId) { this.cuentaId = cuentaId; }
 
     public LocalDateTime getFechaHora() { return fechaHora; }
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }

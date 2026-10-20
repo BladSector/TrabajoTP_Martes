@@ -39,6 +39,7 @@ class FlujoCafeTest {
     @Autowired TicketService tickets;
     @Autowired CierreService cierres;
     @Autowired PedidoDAO pedidoDAO;
+    @Autowired CuentaDAO cuentaDAO;
     @Autowired PerfilMozoService perfiles;
     @Autowired JdbcTemplate jdbc;
     @Autowired MockMvc mvc;
@@ -62,7 +63,7 @@ class FlujoCafeTest {
         producto = new Producto(); producto.setNombre("Cafe grande"); producto.setPrecio(1000.00);
         producto.setCategoria(categoria); producto = menu.crearProducto(producto);
     }
-    private Long mesaId(int indice) { return mesas.listarMesas().get(indice).getId(); }
+    private Integer mesaId(int indice) { return mesas.listarMesas().get(indice).getId(); }
     private Cuenta abrir(int indice) { return mesas.abrirCuenta(mesaId(indice)); }
     private Pedido agregar(Cuenta cuenta, int cantidad) {
         Pedido pedido = new Pedido(); pedido.setProducto(producto); pedido.setCantidad(cantidad); pedido.setMozo("Gabi");
@@ -73,6 +74,11 @@ class FlujoCafeTest {
     private Pago pago(Pedido pedido, int cantidad, MetodoPago metodo) {
         DetallePago detalle = new DetallePago(); detalle.setPedido(pedido); detalle.setCantidad(cantidad);
         Pago pago = new Pago(); pago.setMetodo(metodo); pago.setDetalles(List.of(detalle)); return pago;
+    }
+    private void entregar(Pedido pedido) {
+        pedidos.cambiarEstado(pedido.getId(), EstadoCocina.EN_PREPARACION);
+        pedidos.cambiarEstado(pedido.getId(), EstadoCocina.LISTO);
+        pedidos.confirmarEntrega(pedido.getId(), pedido.getPerfilMozoId());
     }
     private int cantidad(String tabla) { return jdbc.queryForObject("SELECT COUNT(*) FROM " + tabla, Integer.class); }
 
@@ -106,7 +112,7 @@ class FlujoCafeTest {
     @Test
     void eliminarPerfilConservaHistorialYNoReutilizaIdentidad() throws Exception {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta, 1);
-        Long anterior = pedido.getPerfilMozoId();
+        Integer anterior = pedido.getPerfilMozoId();
         mvc.perform(delete("/api/perfiles/" + anterior)).andExpect(status().isBadRequest());
         pedidos.cambiarEstado(pedido.getId(), EstadoCocina.EN_PREPARACION);
         pedidos.cambiarEstado(pedido.getId(), EstadoCocina.LISTO);
@@ -139,7 +145,7 @@ class FlujoCafeTest {
     }
 
     @Test
-    void pagoParcialConDescuentoYSegundoPagoLiberaMesa() {
+    void pagoParcialYSegundoPagoConservanMesaHastaEntrega() throws Exception {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,3);
         Pago parcial = pagos.registrarPago(cuenta.getId(),pago(pedido,2,MetodoPago.EFECTIVO));
         assertThat(parcial.getSubtotal()).isCloseTo(2000.00, within(0.001));
@@ -148,6 +154,12 @@ class FlujoCafeTest {
         assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.ABIERTA);
         assertThat(pedidoDAO.buscarPorId(pedido.getId()).orElseThrow().getCantidadPagada()).isEqualTo(2);
         pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.TARJETA));
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).estaSaldada()).isTrue();
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.ABIERTA);
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isFalse();
+        mvc.perform(get("/api/mesas")).andExpect(jsonPath("$[0].pedidos[0].cantidadPagada").value(3));
+        assertThatThrownBy(() -> mesas.cerrarCuenta(cuenta.getId())).hasMessageContaining("sin entregar");
+        entregar(pedido);
         assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.CERRADA);
         assertThat(mesas.listarMesas().get(0).estaLibre()).isTrue();
         assertThat(tickets.consultarHistorial()).hasSize(2);
@@ -164,6 +176,109 @@ class FlujoCafeTest {
         assertThat(ticket.getTotal()).isCloseTo(1000.00, within(0.001));
         assertThat(ticket.getEstado()).isEqualTo(EstadoTicket.SIMULADO);
         assertThat(ticket.getCae()).isNull();
+    }
+
+    @Test
+    void ticketNoMuestraDescuentoPeroConservaTotalYRegistroContable() throws Exception {
+        Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
+        Pago pago = pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.EFECTIVO));
+        TicketElectronico ticket = tickets.obtenerPorPago(pago.getId());
+        assertThat(ticket.getDescuento()).isCloseTo(100.0,within(0.001));
+        mvc.perform(get("/api/tickets/"+ticket.getId()+"/texto")).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Descuento"))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("TOTAL: $ 900.00")));
+    }
+
+    @Test
+    void entregarAntesDePagarMantieneConsumoYElPagoFinalLiberaMesa() throws Exception {
+        Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1); entregar(pedido);
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).puedeCerrarse()).isFalse();
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isFalse();
+        mvc.perform(get("/api/mesas")).andExpect(jsonPath("$[0].pedidos[0].estadoCocina").value("ENTREGADO"));
+        mvc.perform(post("/api/cuentas/"+cuenta.getId()+"/pagos").contentType("application/json")
+                .content("{\"metodo\":\"EFECTIVO\",\"detalles\":[{\"pedidoId\":"+pedido.getId()+",\"cantidad\":1}]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cuentaCerrada").value(true))
+                .andExpect(jsonPath("$.cuentaSaldada").value(true)).andExpect(jsonPath("$.pago.total").value(900.0));
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isTrue();
+    }
+
+    @Test
+    void cobroCompletoAntesDeEntregaNoLiberaMesaNiPermiteRecobrar() throws Exception {
+        Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
+        mvc.perform(post("/api/cuentas/"+cuenta.getId()+"/pagos").contentType("application/json")
+                .content("{\"metodo\":\"TARJETA\",\"detalles\":[{\"pedidoId\":"+pedido.getId()+",\"cantidad\":1}]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cuentaCerrada").value(false))
+                .andExpect(jsonPath("$.cuentaSaldada").value(true));
+        assertThat(abrir(0).getId()).isEqualTo(cuenta.getId());
+        assertThatThrownBy(() -> pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.TARJETA)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> pedidos.cancelarPedido(pedido.getId())).isInstanceOf(IllegalArgumentException.class);
+        assertThat(cantidad("pagos")).isEqualTo(1); assertThat(cantidad("tickets")).isEqualTo(1);
+        entregar(pedido);
+        assertThat(mesas.listarPedidosMesa(mesaId(0))).isEmpty();
+        assertThat(pedidos.consultarHistorial(LocalDate.of(2026,10,13),null)).hasSize(1);
+    }
+
+    @Test
+    void cancelarTodaLaTandaLiberaMesaSinBorrarHistorial() {
+        Cuenta cuenta = abrir(0); Pedido primero = agregar(cuenta,1), segundo = agregar(cuenta,2);
+        pedidos.cancelarPedido(primero.getId());
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isFalse();
+        pedidos.cancelarPedido(segundo.getId());
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isTrue();
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).getPedidos()).hasSize(2).allMatch(Pedido::isCancelado);
+    }
+
+    private void simularCierreDeVersionAnterior(Cuenta cuenta) {
+        jdbc.update("UPDATE cuentas SET estado='CERRADA',mesa_abierta_id=NULL,fecha_cierre=? WHERE id=?",
+                LocalDateTime.of(2026,10,13,12,0),cuenta.getId());
+        jdbc.update("UPDATE mesas SET estado='LIBRE' WHERE id=?",cuenta.getMesa().getId());
+    }
+
+    @Test
+    void pedidosPagadosDeVersionAnteriorSeVenSinReabrirHistorial() throws Exception {
+        Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
+        pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.TARJETA));
+        simularCierreDeVersionAnterior(cuenta);
+        mvc.perform(get("/api/mesas")).andExpect(jsonPath("$[0].pedidos[0].id").value(pedido.getId()))
+                .andExpect(jsonPath("$[0].pedidos[0].cantidadPagada").value(1));
+        assertThatThrownBy(() -> abrir(0)).hasMessageContaining("anteriores sin entregar");
+        entregar(pedido);
+        assertThat(mesas.listarPedidosMesa(mesaId(0))).isEmpty();
+        assertThat(abrir(0).getId()).isNotEqualTo(cuenta.getId());
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).getFechaCierre()).isEqualTo(LocalDateTime.of(2026,10,13,12,0));
+    }
+
+    @Test
+    void entregarPedidoAntiguoNoLiberaOtraCuentaDeLaMismaMesa() {
+        Cuenta antigua = abrir(0); Pedido anterior = agregar(antigua,1);
+        pagos.registrarPago(antigua.getId(),pago(anterior,1,MetodoPago.TARJETA));
+        simularCierreDeVersionAnterior(antigua);
+        Cuenta nueva = new Cuenta(); nueva.setMesa(antigua.getMesa()); nueva.setFechaApertura(LocalDateTime.of(2026,10,13,13,0));
+        cuentaDAO.guardar(nueva); jdbc.update("UPDATE mesas SET estado='OCUPADA' WHERE id=?",mesaId(0));
+        Pedido actual = agregar(nueva,1);
+        assertThat(mesas.listarPedidosMesa(mesaId(0))).hasSize(2);
+        entregar(anterior);
+        assertThat(mesas.obtenerCuentaAbierta(mesaId(0)).orElseThrow().getId()).isEqualTo(nueva.getId());
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isFalse();
+        assertThat(mesas.listarPedidosMesa(mesaId(0))).extracting(Pedido::getId).containsExactly(actual.getId());
+    }
+
+    @Test
+    void pagoYEntregaSimultaneosCierranLaCuentaSinDuplicar() throws Exception {
+        Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
+        pedidos.cambiarEstado(pedido.getId(),EstadoCocina.EN_PREPARACION);
+        pedidos.cambiarEstado(pedido.getId(),EstadoCocina.LISTO);
+        ExecutorService ejecutor = Executors.newFixedThreadPool(2);
+        CountDownLatch inicio = new CountDownLatch(1);
+        try {
+            Future<?> cobro = ejecutor.submit(() -> { inicio.await(); pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.TARJETA)); return null; });
+            Future<?> entrega = ejecutor.submit(() -> { inicio.await(); pedidos.confirmarEntrega(pedido.getId(),pedido.getPerfilMozoId()); return null; });
+            inicio.countDown(); cobro.get(20,TimeUnit.SECONDS); entrega.get(20,TimeUnit.SECONDS);
+            assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.CERRADA);
+            assertThat(mesas.listarMesas().get(0).estaLibre()).isTrue();
+            assertThat(cantidad("pagos")).isEqualTo(1); assertThat(cantidad("tickets")).isEqualTo(1);
+        } finally { ejecutor.shutdownNow(); }
     }
 
     @Test
@@ -224,54 +339,36 @@ class FlujoCafeTest {
     }
 
     @Test
-    void totalComodoDeEfectivoCalculaDescuento() {
+    void efectivoSiempreUsaDescuentoAutomatico() {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,2);
         Pago pago = pago(pedido,2,MetodoPago.EFECTIVO); pago.setTotal(1750.0);
         Pago registrado = pagos.registrarPago(cuenta.getId(),pago);
-        assertThat(registrado.getDescuento()).isCloseTo(250.0, within(0.001));
-        assertThat(registrado.getTotal()).isCloseTo(1750.0, within(0.001));
+        assertThat(registrado.getDescuento()).isCloseTo(200.0, within(0.001));
+        assertThat(registrado.getTotal()).isCloseTo(1800.0, within(0.001));
     }
 
     @Test
-    void redondeoAceptaAmbosLimitesDelCincoPorCiento() {
-        for (double total : new double[]{855.0,945.0}) {
-            Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
-            Pago pago = pago(pedido,1,MetodoPago.EFECTIVO); pago.setTotal(total);
-            Pago registrado = pagos.registrarPago(cuenta.getId(),pago);
-            assertThat(registrado.getTotal()).isCloseTo(total,within(0.000001));
-            assertThat(registrado.getDescuento()).isCloseTo(1000.0-total,within(0.000001));
-        }
-    }
-
-    @Test
-    void redondeoFueraDeRangoNoRegistraPagosNiTickets() throws Exception {
+    void apiRechazaTotalManualDeUnaInterfazAnterior() throws Exception {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
-        for (double total : new double[]{854.99,945.01,1000.0,1.0,-1.0,Double.NaN,Double.POSITIVE_INFINITY}) {
-            Pago pago = pago(pedido,1,MetodoPago.EFECTIVO); pago.setTotal(total);
-            assertThatThrownBy(() -> pagos.registrarPago(cuenta.getId(),pago)).isInstanceOf(IllegalArgumentException.class);
-        }
         mvc.perform(post("/api/cuentas/"+cuenta.getId()+"/pagos").contentType("application/json")
                 .content("{\"metodo\":\"EFECTIVO\",\"detalles\":[{\"pedidoId\":"+pedido.getId()+",\"cantidad\":1}],\"totalEfectivo\":945.01}"))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("5%")));
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("totalEfectivo")));
         assertThat(cantidad("pagos")).isZero(); assertThat(cantidad("tickets")).isZero();
         assertThat(pedidoDAO.buscarPorId(pedido.getId()).orElseThrow().getCantidadPagada()).isZero();
         assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.ABIERTA);
     }
 
     @Test
-    void redondeoDeCentavosNoAmpliaElCincoPorCiento() {
+    void descuentoAutomaticoRespetaCentavos() {
         producto.setPrecio(0.29); menu.actualizarProducto(producto);
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
-        for (double total : new double[]{0.24,0.28}) {
-            Pago pago = pago(pedido,1,MetodoPago.EFECTIVO); pago.setTotal(total);
-            assertThatThrownBy(() -> pagos.registrarPago(cuenta.getId(),pago)).isInstanceOf(IllegalArgumentException.class);
-        }
-        Pago pago = pago(pedido,1,MetodoPago.EFECTIVO); pago.setTotal(0.25);
-        assertThat(pagos.registrarPago(cuenta.getId(),pago).getTotal()).isCloseTo(0.25,within(0.000001));
+        Pago registrado = pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.EFECTIVO));
+        assertThat(registrado.getDescuento()).isCloseTo(0.03,within(0.000001));
+        assertThat(registrado.getTotal()).isCloseTo(0.26,within(0.000001));
     }
 
     @Test
-    void tarjetaIgnoraElRedondeoDeEfectivo() {
+    void tarjetaSeCobraSinDescuento() {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
         Pago pago = pago(pedido,1,MetodoPago.TARJETA); pago.setTotal(1.0);
         Pago registrado = pagos.registrarPago(cuenta.getId(),pago);
@@ -280,12 +377,9 @@ class FlujoCafeTest {
     }
 
     @Test
-    void redondeoSeCalculaSoloSobreLaCantidadQueSePaga() {
+    void descuentoAutomaticoSeCalculaSoloSobreLaCantidadQueSePaga() {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,3);
-        Pago fuera = pago(pedido,1,MetodoPago.EFECTIVO); fuera.setTotal(1750.0);
-        assertThatThrownBy(() -> pagos.registrarPago(cuenta.getId(),fuera)).isInstanceOf(IllegalArgumentException.class);
-        Pago valido = pago(pedido,1,MetodoPago.EFECTIVO); valido.setTotal(855.0);
-        assertThat(pagos.registrarPago(cuenta.getId(),valido).getTotal()).isCloseTo(855.0,within(0.000001));
+        assertThat(pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.EFECTIVO)).getTotal()).isCloseTo(900.0,within(0.000001));
         assertThat(pedidoDAO.buscarPorId(pedido.getId()).orElseThrow().getCantidadPagada()).isEqualTo(1);
         assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.ABIERTA);
     }
@@ -365,7 +459,7 @@ class FlujoCafeTest {
     @Test
     void errorEnComandaNoDejaMesaOcupadaNiPedidosParciales() {
         Pedido valido = new Pedido(); valido.setProducto(producto); valido.setCantidad(1); valido.setMozo("Gabi");
-        Producto inexistente = new Producto(); inexistente.setId(999999L);
+        Producto inexistente = new Producto(); inexistente.setId(999999);
         Pedido invalido = new Pedido(); invalido.setProducto(inexistente); invalido.setCantidad(1); invalido.setMozo("Gabi");
         assertThatThrownBy(() -> pedidos.enviarComanda(mesaId(0), List.of(valido, invalido)))
                 .isInstanceOf(java.util.NoSuchElementException.class);
@@ -377,7 +471,7 @@ class FlujoCafeTest {
     void cocinaPuedeTerminarPedidoPagadoInclusoDespuesDelCierre() {
         Cuenta cuenta = abrir(0); Pedido pedido = agregar(cuenta,1);
         pagos.registrarPago(cuenta.getId(),pago(pedido,1,MetodoPago.TARJETA));
-        assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.CERRADA);
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.ABIERTA);
         assertThat(pedidos.listarParaCocina()).hasSize(1);
         assertThatThrownBy(() -> pedidos.cambiarEstado(pedido.getId(),EstadoCocina.LISTO))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -385,6 +479,8 @@ class FlujoCafeTest {
         pedidos.cambiarEstado(pedido.getId(),EstadoCocina.EN_PREPARACION);
         pedidos.cambiarEstado(pedido.getId(),EstadoCocina.LISTO);
         pedidos.confirmarEntrega(pedido.getId(),"Gabi");
+        assertThat(mesas.obtenerCuenta(cuenta.getId()).getEstado()).isEqualTo(EstadoCuenta.CERRADA);
+        assertThat(mesas.listarMesas().get(0).estaLibre()).isTrue();
         assertThat(pedidos.listarParaCocina()).isEmpty();
         assertThat(pedidoDAO.buscarPorId(pedido.getId()).orElseThrow().getEstadoCocina()).isEqualTo(EstadoCocina.ENTREGADO);
     }
@@ -453,5 +549,14 @@ class FlujoCafeTest {
         mvc.perform(post("/api/menu").contentType("application/json").content("""
                 {"nombre":"", "precio":-1, "categoriaId":1, "disponible":true}
                 """)).andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void apiRechazaIdentificadoresFueraDelRangoDeInteger() throws Exception {
+        mvc.perform(get("/api/cuentas/2147483648")).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/menu").contentType("application/json")
+                .content("{\"nombre\":\"Cafe\",\"precio\":1000,\"disponible\":true,\"categoriaId\":2147483648}"))
+                .andExpect(status().isBadRequest());
+        assertThat(menu.listarProductos()).hasSize(1);
     }
 }

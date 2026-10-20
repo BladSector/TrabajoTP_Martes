@@ -25,7 +25,7 @@ public class PerfilMozoService {
     @Transactional(readOnly = true)
     public List<PerfilMozo> listar(boolean incluirEliminados) { return perfilDAO.listar(incluirEliminados); }
     @Transactional(readOnly = true)
-    public PerfilMozo obtenerActivo(Long id) {
+    public PerfilMozo obtenerActivo(Integer id) {
         PerfilMozo perfil = perfilDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Perfil inexistente"));
         if (perfil.isEliminado()) throw new IllegalArgumentException("El perfil fue eliminado. Seleccione otro perfil");
         return perfil;
@@ -40,7 +40,7 @@ public class PerfilMozoService {
         });
     }
     @Transactional
-    public void eliminar(Long id) {
+    public void eliminar(Integer id) {
         guard.bloquear(); obtenerActivo(id);
         if (perfilDAO.tienePedidosPendientes(id)) {
             throw new IllegalArgumentException("El perfil tiene pedidos pendientes. Entreguelos o cancelelos antes de eliminarlo");

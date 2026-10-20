@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MenuService {
     public enum Operacion { CREAR, ACTUALIZAR, ELIMINAR }
-    public record Cambio(Operacion operacion, Long id, Producto producto) { }
+    public record Cambio(Operacion operacion, Integer id, Producto producto) { }
     private final ProductoDAO productoDAO;
     private final CategoriaDAO categoriaDAO;
     public MenuService(ProductoDAO productoDAO, CategoriaDAO categoriaDAO) {
@@ -42,7 +42,7 @@ public class MenuService {
         validarProducto(producto); productoDAO.actualizar(producto);
     }
     @Transactional
-    public void eliminarProducto(Long id) {
+    public void eliminarProducto(Integer id) {
         productoDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Producto inexistente"));
         productoDAO.eliminar(id);
     }
@@ -51,7 +51,7 @@ public class MenuService {
         if (cambios == null || cambios.isEmpty() || cambios.size() > 100) {
             throw new IllegalArgumentException("Seleccione entre 1 y 100 cambios del menu");
         }
-        Set<Long> ids = new HashSet<>();
+        Set<Integer> ids = new HashSet<>();
         for (Cambio cambio : cambios) {
             if (cambio == null || cambio.operacion() == null) throw new IllegalArgumentException("Cambio invalido");
             if (cambio.operacion() != Operacion.CREAR && (cambio.id() == null || !ids.add(cambio.id()))) {

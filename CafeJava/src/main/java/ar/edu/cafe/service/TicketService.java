@@ -53,11 +53,11 @@ public class TicketService {
         clienteFiscal.autorizar(guardado); ticketDAO.actualizarValidacion(guardado);
     }
     @Transactional(readOnly = true)
-    public TicketElectronico obtenerTicket(Long id) {
+    public TicketElectronico obtenerTicket(Integer id) {
         return ticketDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Ticket inexistente"));
     }
     @Transactional(readOnly = true)
-    public TicketElectronico obtenerPorPago(Long pagoId) {
+    public TicketElectronico obtenerPorPago(Integer pagoId) {
         return ticketDAO.buscarPorPagoId(pagoId).orElseThrow(() -> new NoSuchElementException("Ticket inexistente"));
     }
     @Transactional(readOnly = true)

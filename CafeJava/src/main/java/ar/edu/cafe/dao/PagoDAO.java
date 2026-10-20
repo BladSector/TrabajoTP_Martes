@@ -14,7 +14,7 @@ public class PagoDAO extends JdbcDAO {
     private RowMapper<Pago> mapper() {
         return (rs, fila) -> {
             Pago pago = new Pago();
-            pago.setId(rs.getLong("id")); pago.setCuentaId(rs.getLong("cuenta_id"));
+            pago.setId(rs.getInt("id")); pago.setCuentaId(rs.getInt("cuenta_id"));
             pago.setFechaHora(rs.getTimestamp("fecha_hora").toLocalDateTime());
             pago.setMetodo(MetodoPago.valueOf(rs.getString("metodo")));
             pago.setSubtotal(rs.getDouble("subtotal")); pago.setDescuento(rs.getDouble("descuento"));
@@ -22,18 +22,18 @@ public class PagoDAO extends JdbcDAO {
             return pago;
         };
     }
-    private List<DetallePago> listarDetalles(Long pagoId) {
+    private List<DetallePago> listarDetalles(Integer pagoId) {
         return jdbc.query("SELECT * FROM detalles_pago WHERE pago_id=? ORDER BY id", (rs, fila) -> {
             DetallePago detalle = new DetallePago();
-            detalle.setId(rs.getLong("id")); detalle.setPedido(pedidoDAO.buscarPorId(rs.getLong("pedido_id")).orElseThrow());
+            detalle.setId(rs.getInt("id")); detalle.setPedido(pedidoDAO.buscarPorId(rs.getInt("pedido_id")).orElseThrow());
             detalle.setCantidad(rs.getInt("cantidad")); detalle.setPrecioUnitario(rs.getDouble("precio_unitario"));
             return detalle;
         }, pagoId);
     }
-    public Optional<Pago> buscarPorId(Long id) {
+    public Optional<Pago> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM pagos WHERE id=?", mapper(), id).stream().findFirst();
     }
-    public List<Pago> listarPorCuenta(Long cuentaId) {
+    public List<Pago> listarPorCuenta(Integer cuentaId) {
         return jdbc.query("SELECT * FROM pagos WHERE cuenta_id=? ORDER BY id", mapper(), cuentaId);
     }
     public Pago guardar(Pago pago) {

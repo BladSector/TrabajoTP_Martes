@@ -36,7 +36,6 @@ public class ImpresionService {
         }
         texto.append("----------------------------------------\n");
         texto.append("Subtotal: $ ").append(importe(ticket.getSubtotal())).append("\n");
-        texto.append("Descuento: $ ").append(importe(ticket.getDescuento())).append("\n");
         texto.append("TOTAL: $ ").append(importe(ticket.getTotal())).append("\n");
         texto.append("Pago: ").append(ticket.getPago().getMetodo()).append("\n");
         return texto.toString();

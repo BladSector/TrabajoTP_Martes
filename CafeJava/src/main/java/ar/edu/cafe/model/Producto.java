@@ -1,7 +1,7 @@
 package ar.edu.cafe.model;
 
 public class Producto {
-    private Long id;
+    private Integer id;
     private String nombre;
     private String descripcion = "";
     private double precio = Dinero.CERO;
@@ -12,8 +12,8 @@ public class Producto {
     public void actualizarPrecio(double precio) { this.precio = Dinero.noNegativo(precio); }
     public void cambiarDisponibilidad(boolean disponible) { this.disponible = disponible; }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }

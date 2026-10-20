@@ -18,7 +18,7 @@ public class CuentaDAO extends JdbcDAO {
     private RowMapper<Cuenta> mapper() {
         return (rs, fila) -> {
             Cuenta cuenta = new Cuenta();
-            cuenta.setId(rs.getLong("id")); cuenta.setMesa(mesaDAO.buscarPorId(rs.getLong("mesa_id")).orElseThrow());
+            cuenta.setId(rs.getInt("id")); cuenta.setMesa(mesaDAO.buscarPorId(rs.getInt("mesa_id")).orElseThrow());
             cuenta.setFechaApertura(rs.getTimestamp("fecha_apertura").toLocalDateTime());
             var cierre = rs.getTimestamp("fecha_cierre");
             cuenta.setFechaCierre(cierre == null ? null : cierre.toLocalDateTime());
@@ -28,10 +28,10 @@ public class CuentaDAO extends JdbcDAO {
             return cuenta;
         };
     }
-    public Optional<Cuenta> buscarPorId(Long id) {
+    public Optional<Cuenta> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM cuentas WHERE id=?", mapper(), id).stream().findFirst();
     }
-    public Optional<Cuenta> buscarAbiertaPorMesa(Long mesaId) {
+    public Optional<Cuenta> buscarAbiertaPorMesa(Integer mesaId) {
         return jdbc.query("SELECT * FROM cuentas WHERE mesa_abierta_id=?", mapper(), mesaId).stream().findFirst();
     }
     public List<Cuenta> listarAbiertas() {

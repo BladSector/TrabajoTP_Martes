@@ -8,7 +8,9 @@ Abrir esta carpeta en IntelliJ IDEA como proyecto Maven, seleccionando Java 17. 
 
 La implementacion usa clases Java con atributos privados, getters/setters, metodos de negocio, servicios y DAO JDBC. No utiliza Lombok ni Hibernate, para que las relaciones y las consultas sean visibles al estudiar el codigo.
 
-Los importes del modelo Java usan `double`, con redondeo a dos decimales en los calculos. Las solicitudes HTTP usan `Double` para validar campos ausentes y permitir el total manual de efectivo opcional. Los DAO leen los importes con `getDouble()`; las columnas SQL conservan `DECIMAL`.
+Los identificadores y el numero de comprobante usan `Integer`, la version objeto de `int`, para permitir `null` cuando todavia no fueron asignados. Cantidades y contadores usan `int`. Los DAO y la API tambien usan identificadores de 32 bits. Las tablas existentes conservan `BIGINT` por compatibilidad y no es necesario reiniciar ni migrar datos; los valores deben caber en un entero positivo de hasta 2147483647.
+
+Los importes del modelo Java usan `double`, con redondeo a dos decimales en los calculos. El servidor calcula los totales: efectivo aplica automaticamente un 10 % de descuento y tarjeta no tiene descuento. No hay total manual ni rango de redondeo. Los DAO leen los importes con `getDouble()`; las columnas SQL conservan `DECIMAL`.
 
 ## Probar sin configurar MySQL
 
@@ -69,11 +71,11 @@ Para reabrir el sistema despues de un cierre, se debe quitar el cierre de la jor
 3. Agregar productos con cantidad, cliente y observaciones.
 4. Cocina avanza de pendiente a en preparacion y listo. El mozo recibe el aviso y confirma la entrega desde Para entregar.
 5. Elegir cantidades a cobrar y registrar el pago.
-6. Se aplica 10 % de descuento en efectivo, o el total personalizado de efectivo. Tarjeta no tiene descuento.
-7. Se genera el ticket. Cuando no queda ningun consumo pendiente, la cuenta se cierra y la mesa queda libre.
+6. Se aplica automaticamente 10 % de descuento en efectivo. Tarjeta no tiene descuento.
+7. Se genera el ticket sin mostrar el renglon de descuento. La cuenta se cierra y la mesa queda libre solo cuando no queden pagos ni entregas pendientes.
 8. Consultar tickets y cerrar la jornada desde sus secciones.
 
-Take away requiere nombre de cliente. Los pedidos pagados no se eliminan al liberar una mesa. Los cambios del menu no alteran los nombres ni los precios historicos de los consumos.
+Take away requiere nombre de cliente. Los pedidos pagados siguen visibles con la marca Pagado hasta su entrega; los entregados siguen visibles hasta su cobro. El historial permanece despues de liberar la mesa. Los cambios del menu no alteran los nombres ni los precios historicos de los consumos.
 
 ## Organizacion
 
@@ -89,7 +91,7 @@ Take away requiere nombre de cliente. Los pedidos pagados no se eliminan al libe
 
 Los atributos principales de los servicios corresponden a la tabla acordada. Se agregaron dependencias para obtener productos, usar el reloj y coordinar las transacciones. `OperacionGuard` bloquea una fila de control durante cada operacion de mesa/pedido/pago/cierre, evitando cobros simultaneos duplicados o pagos durante el cierre.
 
-El pago, sus detalles, las cantidades pagadas, el ticket y la liberacion de la mesa se guardan en una misma transaccion. Si falla la generacion del ticket, se revierte todo el pago. La impresion automatica se ejecuta despues del commit y no revierte un cobro registrado.
+El pago, sus detalles, las cantidades pagadas y el ticket se guardan en una misma transaccion. La mesa se libera en la transaccion que completa el ultimo requisito: cobro o entrega. Si falla la generacion del ticket, se revierte todo el pago. La impresion automatica se ejecuta despues del commit y no revierte un cobro registrado.
 
 ## Alcance de esta version
 
@@ -127,7 +129,7 @@ Cada pedido guarda el identificador del perfil y una copia del nombre al registr
 
 El pedido de una mesa se arma en un dialogo con categorias, busqueda, opciones de cafe y cantidades editables. Se guarda toda la comanda al pulsar Confirmar tanda. Take Away pide el nombre del cliente y permite cobrar por cliente.
 
-Gestion de platos permite preparar cambios y aplicarlos juntos. Tickets y cierre diario usan los mismos dialogos y tablas. Cocina conserva los pedidos pendientes de preparar aunque se haya pagado y liberado la mesa.
+Gestion de platos permite preparar cambios y aplicarlos juntos. Tickets y cierre diario usan los mismos dialogos y tablas. Cobrar no libera una mesa con entregas pendientes. El mapa recupera tambien pedidos sin entregar de cuentas que versiones anteriores ya habian cerrado, sin modificar esos registros historicos.
 
 La actualizacion de interfaz se empaqueta como version 1.1.0 para no reemplazar el JAR bloqueado por la instancia anterior. El puerto predeterminado ahora es 8081. La base MySQL y sus datos no se reinician.
 

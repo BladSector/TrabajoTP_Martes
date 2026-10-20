@@ -58,18 +58,22 @@ public class DatosIniciales implements ApplicationRunner {
                 if (!item.has("id") || !item.has("precio") || item.path("nombre").asText().isBlank()) {
                     throw new IllegalArgumentException("Producto inicial incompleto");
                 }
+                JsonNode id = item.get("id");
+                if (!id.isIntegralNumber() || !id.canConvertToInt() || id.intValue() <= 0) {
+                    throw new IllegalArgumentException("El identificador del producto debe ser un entero positivo de 32 bits");
+                }
                 JsonNode descripcion = item.path("descripcion");
                 String texto = descripcion.isArray()
                         ? StreamSupport.stream(descripcion.spliterator(), false).map(JsonNode::asText).collect(Collectors.joining("\n"))
                         : descripcion.asText("");
                 jdbc.update("INSERT INTO productos(id,categoria_id,nombre,descripcion,precio,disponible,eliminado) VALUES(?,?,?,?,?,?,FALSE)",
-                        item.get("id").asLong(), categoria.getId(), item.get("nombre").asText(), texto,
+                        id.intValue(), categoria.getId(), item.get("nombre").asText(), texto,
                         Dinero.noNegativo(item.get("precio").doubleValue()), item.path("disponible").asBoolean(true));
             }
         }
         if (jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<Boolean>) conexion ->
                 "H2".equals(conexion.getMetaData().getDatabaseProductName()))) {
-            Long siguiente = jdbc.queryForObject("SELECT MAX(id)+1 FROM productos", Long.class);
+            Integer siguiente = jdbc.queryForObject("SELECT MAX(id)+1 FROM productos", Integer.class);
             if (siguiente != null) jdbc.execute("ALTER TABLE productos ALTER COLUMN id RESTART WITH " + siguiente);
         }
     }

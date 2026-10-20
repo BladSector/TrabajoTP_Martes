@@ -12,11 +12,11 @@ public class CategoriaDAO extends JdbcDAO {
     public CategoriaDAO(JdbcTemplate jdbc) { super(jdbc); }
     private final RowMapper<Categoria> mapper = (rs, fila) -> {
         Categoria categoria = new Categoria();
-        categoria.setId(rs.getLong("id")); categoria.setNombre(rs.getString("nombre"));
+        categoria.setId(rs.getInt("id")); categoria.setNombre(rs.getString("nombre"));
         return categoria;
     };
     public List<Categoria> listar() { return jdbc.query("SELECT * FROM categorias ORDER BY nombre", mapper); }
-    public Optional<Categoria> buscarPorId(Long id) {
+    public Optional<Categoria> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM categorias WHERE id=?", mapper, id).stream().findFirst();
     }
     public Optional<Categoria> buscarPorNombre(String nombre) {

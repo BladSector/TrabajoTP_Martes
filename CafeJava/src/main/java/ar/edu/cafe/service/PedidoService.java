@@ -28,12 +28,12 @@ public class PedidoService {
     public List<Pedido> listarParaCocina() { return pedidoDAO.listarParaCocina(); }
 
     @Transactional(readOnly = true)
-    public List<Pedido> consultarHistorial(java.time.LocalDate fecha, Long perfilId) {
+    public List<Pedido> consultarHistorial(java.time.LocalDate fecha, Integer perfilId) {
         return pedidoDAO.consultarHistorial(fecha == null ? java.time.LocalDate.now(clock) : fecha, perfilId);
     }
 
     @Transactional
-    public Cuenta enviarComanda(Long mesaId, List<Pedido> nuevosPedidos) {
+    public Cuenta enviarComanda(Integer mesaId, List<Pedido> nuevosPedidos) {
         guard.bloquearDiaAbierto();
         if (nuevosPedidos == null || nuevosPedidos.isEmpty() || nuevosPedidos.size() > 100) {
             throw new IllegalArgumentException("La comanda debe contener entre 1 y 100 productos");
@@ -44,13 +44,13 @@ public class PedidoService {
         enviarACocina(registrados);
         return mesaService.obtenerCuenta(cuenta.getId());
     }
-    private Cuenta cuentaAbierta(Long id) {
+    private Cuenta cuentaAbierta(Integer id) {
         Cuenta cuenta = cuentaDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Cuenta inexistente"));
         if (cuenta.getEstado() != EstadoCuenta.ABIERTA) throw new IllegalArgumentException("La cuenta esta cerrada");
         return cuenta;
     }
     @Transactional
-    public Pedido agregarPedido(Long cuentaId, Pedido pedido) {
+    public Pedido agregarPedido(Integer cuentaId, Pedido pedido) {
         guard.bloquearDiaAbierto();
         Cuenta cuenta = cuentaAbierta(cuentaId);
         if (pedido == null || pedido.getProducto() == null || pedido.getProducto().getId() == null) {
@@ -90,13 +90,14 @@ public class PedidoService {
         }
     }
     @Transactional
-    public void cancelarPedido(Long id) {
+    public void cancelarPedido(Integer id) {
         guard.bloquearDiaAbierto();
         Pedido pedido = pedidoDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Pedido inexistente"));
         cuentaAbierta(pedido.getCuentaId()); pedido.cancelar(); pedidoDAO.actualizar(pedido);
+        mesaService.cerrarSiCompletada(pedido.getCuentaId());
     }
     @Transactional
-    public void cambiarEstado(Long id, EstadoCocina siguiente) {
+    public void cambiarEstado(Integer id, EstadoCocina siguiente) {
         guard.bloquear();
         Pedido pedido = pedidoDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Pedido inexistente"));
         if (siguiente != EstadoCocina.EN_PREPARACION && siguiente != EstadoCocina.LISTO) {
@@ -111,12 +112,12 @@ public class PedidoService {
     }
 
     @Transactional
-    public void confirmarEntrega(Long id, String mozo) {
+    public void confirmarEntrega(Integer id, String mozo) {
         confirmarEntrega(id, perfiles.guardar(mozo).getId());
     }
 
     @Transactional
-    public void confirmarEntrega(Long id, Long perfilId) {
+    public void confirmarEntrega(Integer id, Integer perfilId) {
         guard.bloquear();
         Pedido pedido = pedidoDAO.buscarPorId(id).orElseThrow(() -> new NoSuchElementException("Pedido inexistente"));
         PerfilMozo perfil = perfiles.obtenerActivo(perfilId);
@@ -127,5 +128,6 @@ public class PedidoService {
             throw new IllegalArgumentException("Solo se puede entregar un pedido listo y no cancelado");
         }
         pedido.cambiarEstadoCocina(EstadoCocina.ENTREGADO); pedidoDAO.actualizar(pedido);
+        mesaService.cerrarSiCompletada(pedido.getCuentaId());
     }
 }

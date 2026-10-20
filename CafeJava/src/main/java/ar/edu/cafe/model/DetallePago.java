@@ -1,7 +1,7 @@
 package ar.edu.cafe.model;
 
 public class DetallePago {
-    private Long id;
+    private Integer id;
     private Pedido pedido;
     private int cantidad;
     private double precioUnitario = Dinero.CERO;
@@ -10,8 +10,8 @@ public class DetallePago {
         return Dinero.redondear(precioUnitario * cantidad);
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Pedido getPedido() { return pedido; }
     public void setPedido(Pedido pedido) { this.pedido = pedido; }

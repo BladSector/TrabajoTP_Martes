@@ -1,6 +1,6 @@
 # API
 
-Todas las rutas usan JSON, excepto el texto de ticket. Los identificadores son numericos. Los errores devuelven `{"error":"mensaje"}`.
+Todas las rutas usan JSON, excepto el texto de ticket. Los identificadores son enteros de 32 bits (`Integer` en Java), con valor positivo de hasta 2147483647. Un identificador fuera de rango en una solicitud se rechaza con HTTP 400. Los errores de negocio devuelven `{"error":"mensaje"}`.
 
 | Metodo | Ruta | Operacion |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ Todas las rutas usan JSON, excepto el texto de ticket. Los identificadores son n
 | GET | /api/mesas/{id}/cuenta | Cuenta activa, o {"cuenta":null} |
 | POST | /api/mesas/{id}/cuenta | Abrir cuenta, o devolver la que ya esta abierta |
 | GET | /api/cuentas/{id} | Cuenta completa e historial |
-| POST | /api/cuentas/{id}/cerrar | Liberar mesa si no hay pendientes |
+| POST | /api/cuentas/{id}/cerrar | Liberar mesa si no hay pagos ni entregas pendientes |
 | GET | /api/menu | Productos no eliminados |
 | POST | /api/menu | Crear producto |
 | PUT | /api/menu/{id} | Modificar producto |
@@ -66,10 +66,14 @@ El pedido conserva `mozo` como nombre historico y `perfilMozoId` como identidad.
 ## Pago parcial
 
 ```json
-{"metodo":"EFECTIVO","detalles":[{"pedidoId":1,"cantidad":1}],"totalEfectivo":null}
+{"metodo":"EFECTIVO","detalles":[{"pedidoId":1,"cantidad":1}]}
 ```
 
-Los precios y subtotales se calculan en el servidor. El campo opcional `totalEfectivo` permite redondear hasta un 5 % por debajo o por encima del total con el descuento automatico del 10 %. Ambos extremos se incluyen y se limitan a centavos sin ampliar el margen. Por ejemplo, un subtotal de 10000 deja un total con descuento de 9000 y admite de 8550 a 9450. Fuera del rango se devuelve HTTP 400 sin registrar pagos, tickets ni cantidades pagadas. En tarjeta se ignora ese campo. Si se omite, se conserva el descuento automatico.
+Los precios, subtotales y totales se calculan en el servidor. Efectivo aplica automaticamente un 10 % de descuento; tarjeta no tiene descuento. No existe total manual ni rango del 5 %. Una solicitud antigua con `totalEfectivo` no nulo se rechaza con HTTP 400 sin registrar un cobro, para evitar procesar un importe distinto del solicitado por una interfaz desactualizada.
+
+La respuesta incluye `cuentaSaldada` y `cuentaCerrada`: no son equivalentes. Una cuenta saldada con entregas pendientes sigue abierta y ocupando la mesa; se cierra automaticamente al entregar el ultimo pedido. Si se entrega primero, se cierra con el ultimo cobro. La entrega sigue disponible despues de cerrar la jornada.
+
+`GET /api/mesas` incluye los pedidos de la cuenta abierta y los pendientes de entrega de cuentas antiguas ya cerradas. No se suman importes de cuentas historicas al saldo actual. El texto del ticket no muestra el renglon de descuento; el registro contable y el resumen de cierre lo conservan.
 
 ## Producto
 

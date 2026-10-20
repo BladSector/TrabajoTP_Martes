@@ -1,7 +1,7 @@
 package ar.edu.cafe.model;
 
 public class ItemTicket {
-    private Long id;
+    private Integer id;
     private String codigoProducto;
     private String descripcion;
     private int cantidad;
@@ -15,8 +15,8 @@ public class ItemTicket {
         return Dinero.redondear(calcularImporte() * alicuotaIva / 100.0);
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getCodigoProducto() { return codigoProducto; }
     public void setCodigoProducto(String codigoProducto) { this.codigoProducto = codigoProducto; }

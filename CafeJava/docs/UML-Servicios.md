@@ -15,11 +15,14 @@ classDiagram
     class MesaService {
         -MesaDAO mesaDAO
         -CuentaDAO cuentaDAO
+        -PedidoDAO pedidoDAO
         +listarMesas() List~Mesa~
-        +abrirCuenta(Long mesaId) Cuenta
-        +cerrarCuenta(Long cuentaId) void
-        +obtenerCuenta(Long cuentaId) Cuenta
-        +obtenerCuentaAbierta(Long mesaId) Optional~Cuenta~
+        +listarPedidosMesa(Integer mesaId) List~Pedido~
+        +abrirCuenta(Integer mesaId) Cuenta
+        +cerrarCuenta(Integer cuentaId) void
+        +cerrarSiCompletada(Integer cuentaId) boolean
+        +obtenerCuenta(Integer cuentaId) Cuenta
+        +obtenerCuentaAbierta(Integer mesaId) Optional~Cuenta~
     }
     class MenuService {
         -ProductoDAO productoDAO
@@ -29,15 +32,15 @@ classDiagram
         +crearCategoria(Categoria categoria) Categoria
         +crearProducto(Producto producto) Producto
         +actualizarProducto(Producto producto) void
-        +eliminarProducto(Long id) void
+        +eliminarProducto(Integer id) void
         +aplicarCambios(List~Cambio~ cambios) void
     }
     class PerfilMozoService {
         -PerfilMozoDAO perfilDAO
         +listar(boolean incluirEliminados) List~PerfilMozo~
         +guardar(String nombre) PerfilMozo
-        +obtenerActivo(Long id) PerfilMozo
-        +eliminar(Long id) void
+        +obtenerActivo(Integer id) PerfilMozo
+        +eliminar(Integer id) void
     }
     class PedidoService {
         -PedidoDAO pedidoDAO
@@ -45,15 +48,15 @@ classDiagram
         -ProductoDAO productoDAO
         -MesaService mesaService
         -PerfilMozoService perfiles
-        +agregarPedido(Long cuentaId, Pedido pedido) Pedido
+        +agregarPedido(Integer cuentaId, Pedido pedido) Pedido
         +enviarACocina(List~Pedido~ pedidos) void
-        +cancelarPedido(Long id) void
-        +enviarComanda(Long mesaId, List~Pedido~ nuevosPedidos) Cuenta
+        +cancelarPedido(Integer id) void
+        +enviarComanda(Integer mesaId, List~Pedido~ nuevosPedidos) Cuenta
         +listarParaCocina() List~Pedido~
-        +consultarHistorial(LocalDate fecha, Long perfilId) List~Pedido~
-        +cambiarEstado(Long id, EstadoCocina siguiente) void
-        +confirmarEntrega(Long id, Long perfilId) void
-        +confirmarEntrega(Long id, String mozo) void
+        +consultarHistorial(LocalDate fecha, Integer perfilId) List~Pedido~
+        +cambiarEstado(Integer id, EstadoCocina siguiente) void
+        +confirmarEntrega(Integer id, Integer perfilId) void
+        +confirmarEntrega(Integer id, String mozo) void
     }
     class PagoService {
         -PagoDAO pagoDAO
@@ -62,7 +65,7 @@ classDiagram
         -TicketService ticketService
         -ImpresionService impresionService
         +calcularDescuento(double subtotal, MetodoPago metodo) double
-        +registrarPago(Long cuentaId, Pago pago) Pago
+        +registrarPago(Integer cuentaId, Pago pago) Pago
     }
     class TicketService {
         -TicketDAO ticketDAO
@@ -70,8 +73,8 @@ classDiagram
         -ConfiguracionFiscal configuracion
         +generarTicket(Pago pago) TicketElectronico
         +validarTicket(TicketElectronico ticket) void
-        +obtenerTicket(Long id) TicketElectronico
-        +obtenerPorPago(Long pagoId) TicketElectronico
+        +obtenerTicket(Integer id) TicketElectronico
+        +obtenerPorPago(Integer pagoId) TicketElectronico
         +consultarHistorial() List~TicketElectronico~
     }
     class ImpresionService {
@@ -94,6 +97,7 @@ classDiagram
     }
     MesaService --> MesaDAO
     MesaService --> CuentaDAO
+    MesaService --> PedidoDAO
     MenuService --> ProductoDAO
     MenuService --> CategoriaDAO
     PerfilMozoService --> PerfilMozoDAO
@@ -118,4 +122,4 @@ classDiagram
 
 `Clock` permite obtener fechas y horas de forma controlada. `OperacionGuard` coordina operaciones transaccionales. Ambas son dependencias adicionales de varios servicios y se omiten del dibujo resumido.
 
-Los DAO y el cliente fiscal aparecen como colaboradores, no como parte del modelo. `Cambio` es un record interno de `MenuService`, no una entidad persistida. La sobrecarga `confirmarEntrega(Long, String)` mantiene compatibilidad con solicitudes antiguas; la interfaz actual utiliza el identificador del perfil.
+Los DAO y el cliente fiscal aparecen como colaboradores, no como parte del modelo. `Cambio` es un record interno de `MenuService`, no una entidad persistida. La sobrecarga `confirmarEntrega(Integer, String)` mantiene compatibilidad con solicitudes antiguas; la interfaz actual utiliza el identificador del perfil.

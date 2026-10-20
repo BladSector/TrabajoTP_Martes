@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class TicketElectronico {
-    private Long id;
+    private Integer id;
     private String codigo;
     private Pago pago;
     private LocalDateTime fechaEmision;
@@ -25,7 +25,7 @@ public class TicketElectronico {
     private String domicilioEmisor = "";
     private String condicionIvaEmisor;
     private int puntoVenta;
-    private Long numeroComprobante;
+    private Integer numeroComprobante;
     private String cae;
     private LocalDate vencimientoCae;
 
@@ -35,14 +35,14 @@ public class TicketElectronico {
         iva = Dinero.CERO;
         total = Dinero.redondear(subtotal - descuento);
     }
-    public void registrarAutorizacion(Long numero, String cae, LocalDate vencimiento) {
+    public void registrarAutorizacion(Integer numero, String cae, LocalDate vencimiento) {
         numeroComprobante = numero; this.cae = cae; vencimientoCae = vencimiento;
         estado = EstadoTicket.VALIDADO;
     }
     public void registrarRechazo() { estado = EstadoTicket.RECHAZADO; }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getCodigo() { return codigo; }
     public void setCodigo(String codigo) { this.codigo = codigo; }
@@ -98,8 +98,8 @@ public class TicketElectronico {
     public int getPuntoVenta() { return puntoVenta; }
     public void setPuntoVenta(int puntoVenta) { this.puntoVenta = puntoVenta; }
 
-    public Long getNumeroComprobante() { return numeroComprobante; }
-    public void setNumeroComprobante(Long numeroComprobante) { this.numeroComprobante = numeroComprobante; }
+    public Integer getNumeroComprobante() { return numeroComprobante; }
+    public void setNumeroComprobante(Integer numeroComprobante) { this.numeroComprobante = numeroComprobante; }
 
     public String getCae() { return cae; }
     public void setCae(String cae) { this.cae = cae; }

@@ -16,17 +16,17 @@ public class ProductoDAO extends JdbcDAO {
     private RowMapper<Producto> mapper() {
         return (rs, fila) -> {
             Producto producto = new Producto();
-            producto.setId(rs.getLong("id")); producto.setNombre(rs.getString("nombre"));
+            producto.setId(rs.getInt("id")); producto.setNombre(rs.getString("nombre"));
             producto.setDescripcion(rs.getString("descripcion")); producto.setPrecio(rs.getDouble("precio"));
             producto.setDisponible(rs.getBoolean("disponible")); producto.setEliminado(rs.getBoolean("eliminado"));
-            producto.setCategoria(categoriaDAO.buscarPorId(rs.getLong("categoria_id")).orElseThrow());
+            producto.setCategoria(categoriaDAO.buscarPorId(rs.getInt("categoria_id")).orElseThrow());
             return producto;
         };
     }
     public List<Producto> listar() {
         return jdbc.query("SELECT * FROM productos WHERE eliminado=FALSE ORDER BY categoria_id,nombre", mapper());
     }
-    public Optional<Producto> buscarPorId(Long id) {
+    public Optional<Producto> buscarPorId(Integer id) {
         return jdbc.query("SELECT * FROM productos WHERE id=?", mapper(), id).stream().findFirst();
     }
     public Producto guardar(Producto producto) {
@@ -40,7 +40,7 @@ public class ProductoDAO extends JdbcDAO {
                 producto.getCategoria().getId(), producto.getNombre(), producto.getDescripcion(),
                 producto.getPrecio(), producto.isDisponible(), producto.getId());
     }
-    public void eliminar(Long id) {
+    public void eliminar(Integer id) {
         jdbc.update("UPDATE productos SET eliminado=TRUE,disponible=FALSE WHERE id=?", id);
     }
 }

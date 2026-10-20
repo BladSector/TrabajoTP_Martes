@@ -10,7 +10,7 @@ public abstract class JdbcDAO {
 
     protected JdbcDAO(JdbcTemplate jdbc) { this.jdbc = jdbc; }
 
-    protected Long insertar(String sql, Object... valores) {
+    protected Integer insertar(String sql, Object... valores) {
         GeneratedKeyHolder claves = new GeneratedKeyHolder();
         jdbc.update(conexion -> {
             PreparedStatement sentencia = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -19,6 +19,6 @@ public abstract class JdbcDAO {
         }, claves);
         Number clave = claves.getKey();
         if (clave == null) throw new IllegalStateException("La base no devolvio el identificador");
-        return clave.longValue();
+        return Math.toIntExact(clave.longValue());
     }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Cuenta {
-    private Long id;
+    private Integer id;
     private Mesa mesa;
     private LocalDateTime fechaApertura;
     private LocalDateTime fechaCierre;
@@ -25,13 +25,18 @@ public class Cuenta {
         return pedidos.stream().filter(p -> p.obtenerCantidadPendienteDePago() > 0).toList();
     }
     public boolean estaSaldada() { return obtenerPedidosPendientesDePago().isEmpty(); }
+    public List<Pedido> obtenerPedidosPendientesDeEntrega() {
+        return pedidos.stream().filter(p -> !p.isCancelado() && p.getEstadoCocina() != EstadoCocina.ENTREGADO).toList();
+    }
+    public boolean puedeCerrarse() { return estaSaldada() && obtenerPedidosPendientesDeEntrega().isEmpty(); }
     public void cerrar() {
         if (!estaSaldada()) throw new IllegalArgumentException("La cuenta tiene consumos sin pagar");
+        if (!obtenerPedidosPendientesDeEntrega().isEmpty()) throw new IllegalArgumentException("La cuenta tiene pedidos sin entregar");
         estado = EstadoCuenta.CERRADA;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public Mesa getMesa() { return mesa; }
     public void setMesa(Mesa mesa) { this.mesa = mesa; }
