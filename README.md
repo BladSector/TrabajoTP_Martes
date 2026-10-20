@@ -393,6 +393,7 @@ Para presentar el programa manualmente, usar una base de demostracion con jornad
 ## 10. Documentacion complementaria
 
 - [Guia tecnica de CafeJava](CafeJava/README.md).
-- [Diagrama UML](CafeJava/docs/UML.md).
+- [UML completo del modelo, sin getters ni setters](CafeJava/docs/UML.md).
+- [UML separado de servicios](CafeJava/docs/UML-Servicios.md).
 - [API y ejemplos de solicitudes](CafeJava/docs/API.md).
 - [Capturas de las pantallas](CafeJava/docs/capturas/).
